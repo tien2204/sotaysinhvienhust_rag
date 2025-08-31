@@ -138,8 +138,6 @@ def crawl_all_scholarships():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36'
     }
     
-    print("Đang crawl TẤT CẢ học bổng với header và payload chính xác...")
-
     try:
         # Gửi yêu cầu POST với tham số `json` để gửi payload dưới dạng JSON
         response = requests.post(api_url, headers=headers, json=payload)

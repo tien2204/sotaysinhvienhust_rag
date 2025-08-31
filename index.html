@@ -14,6 +14,9 @@
         <header>
             <i class="fas fa-robot"></i>
             <h1>Trợ lý Sổ tay Sinh viên Bách khoa</h1>
+            <button id="scholarship-button" title="Xem học bổng">
+                <i class="fas fa-graduation-cap"></i>
+            </button>
         </header>
 
         <main class="chat-box">
@@ -44,5 +47,20 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <!-- Link to external JavaScript file -->
     <script src="script.js"></script>
+
+    <div id="scholarship-modal" class="modal hidden">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h2 id="modal-title">Danh sách Học bổng</h2>
+                <button id="close-modal-button" title="Đóng"><i class="fas fa-times"></i></button>
+            </header>
+            <main class="modal-body">
+                <div id="scholarship-list-container">
+                    </div>
+                <div id="scholarship-detail-container" class="hidden">
+                    </div>
+            </main>
+        </div>
+    </div>
 </body>
 </html>

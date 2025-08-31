@@ -1,10 +1,5 @@
-// --- DOM Elements ---
-const sendButton = document.getElementById('send-button');
-const userInput = document.getElementById('user-input');
-const messagesDiv = document.getElementById('messages');
-const faqListDiv = document.getElementById('faq-list');
-
-// --- FAQ Data ---
+// Các biến và dữ liệu toàn cục không phụ thuộc vào DOM
+let allScholarships = []; 
 const faqQuestions = [
     "Làm thế nào để đạt điểm rèn luyện loại Giỏi?",
     "Thông tin về học bổng ở đâu?",
@@ -18,119 +13,198 @@ const faqQuestions = [
     "Làm sao để đăng ký Ký túc xá?"
 ];
 
-// --- Event Listeners ---
-sendButton.addEventListener('click', sendMessage);
-userInput.addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        sendMessage();
-    }
-});
-// Populate FAQs when the document is loaded
-document.addEventListener('DOMContentLoaded', populateFAQs);
+// --- TOÀN BỘ LOGIC TƯƠNG TÁC VỚI TRANG WEB SẼ NẰM TRONG ĐÂY ---
+document.addEventListener('DOMContentLoaded', () => {
 
+    // --- DOM Elements ---
+    // Khai báo bên trong để đảm bảo các phần tử HTML đã tồn tại
+    const sendButton = document.getElementById('send-button');
+    const userInput = document.getElementById('user-input');
+    const messagesDiv = document.getElementById('messages');
+    const faqListDiv = document.getElementById('faq-list');
+    const scholarshipButton = document.getElementById('scholarship-button');
+    const scholarshipModal = document.getElementById('scholarship-modal');
+    const closeModalButton = document.getElementById('close-modal-button');
+    const scholarshipListContainer = document.getElementById('scholarship-list-container');
+    const scholarshipDetailContainer = document.getElementById('scholarship-detail-container');
+    const modalTitle = document.getElementById('modal-title');
+    const modalHeader = document.querySelector('.modal-header');
 
-// --- Functions ---
+    // --- Functions ---
+    // Các hàm này được định nghĩa bên trong để có thể truy cập các biến DOM ở trên một cách an toàn
 
-/**
- * Sends a user's question to the backend and displays the response.
- */
-async function sendMessage() {
-    const question = userInput.value.trim();
-    if (question === '') {
-        return;
-    }
+    async function sendMessage() {
+        const question = userInput.value.trim();
+        if (question === '') return;
 
-    addMessage(question, 'user-message');
-    userInput.value = '';
+        addMessage(question, 'user-message');
+        userInput.value = '';
+        const thinkingMessage = addThinkingAnimation();
 
-    // Show thinking animation
-    const thinkingMessage = addThinkingAnimation();
+        try {
+            const response = await fetch('http://127.0.0.1:8000/ask', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question: question })
+            });
 
-    try {
-        const response = await fetch('http://127.0.0.1:8000/ask', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ question: question })
-        });
+            if (!response.ok) throw new Error('Lỗi khi kết nối đến backend');
 
-        if (!response.ok) {
-            throw new Error('Lỗi khi kết nối đến backend');
-        }
-
-        const data = await response.json();
-        const botAnswer = data.answer;
-
-        // Remove thinking animation
-        thinkingMessage.remove();
-
-        // Convert Markdown to HTML and display the message
-        addMessage(marked.parse(botAnswer), 'bot-message', true);
-
-    } catch (error) {
-        console.error('Lỗi:', error);
-        if (thinkingMessage) {
+            const data = await response.json();
             thinkingMessage.remove();
+            addMessage(marked.parse(data.answer), 'bot-message', true);
+        } catch (error) {
+            console.error('Lỗi:', error);
+            if (thinkingMessage) thinkingMessage.remove();
+            addMessage('Xin lỗi, đã xảy ra lỗi. Vui lòng thử lại sau.', 'bot-message');
         }
-        addMessage('Xin lỗi, đã xảy ra lỗi. Vui lòng thử lại sau.', 'bot-message');
     }
-}
 
-/**
- * Adds a message to the chat display.
- * @param {string} text - The message content (can be plain text or HTML).
- * @param {string} messageType - The class for the message ('user-message' or 'bot-message').
- * @param {boolean} isHTML - Flag to indicate if the text is HTML.
- * @returns {HTMLElement} The created message container element.
- */
-function addMessage(text, messageType, isHTML = false) {
-    const messageContainer = document.createElement('div');
-    messageContainer.classList.add('message', messageType);
+    function addMessage(text, messageType, isHTML = false) {
+        const messageContainer = document.createElement('div');
+        messageContainer.classList.add('message', messageType);
 
-    if (isHTML) {
-        messageContainer.innerHTML = text;
-    } else {
-        const messageElement = document.createElement('p');
-        messageElement.textContent = text;
-        messageContainer.appendChild(messageElement);
+        if (isHTML) {
+            messageContainer.innerHTML = text;
+        } else {
+            const p = document.createElement('p');
+            p.textContent = text;
+            messageContainer.appendChild(p);
+        }
+        
+        messagesDiv.appendChild(messageContainer);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        return messageContainer;
     }
-    
-    messagesDiv.appendChild(messageContainer);
-    // Scroll to the latest message
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    return messageContainer;
-}
 
-/**
- * Displays a thinking animation in the chat.
- * @returns {HTMLElement} The created animation container element.
- */
-function addThinkingAnimation() {
-    const thinkingContainer = document.createElement('div');
-    thinkingContainer.classList.add('message', 'bot-message', 'thinking-animation');
-    
-    const spinnerIcon = document.createElement('i');
-    spinnerIcon.classList.add('fas', 'fa-spinner', 'fa-pulse');
+    function addThinkingAnimation() {
+        const thinkingContainer = document.createElement('div');
+        thinkingContainer.classList.add('message', 'bot-message', 'thinking-animation');
+        thinkingContainer.innerHTML = '<i class="fas fa-spinner fa-pulse"></i>';
+        messagesDiv.appendChild(thinkingContainer);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        return thinkingContainer;
+    }
 
-    thinkingContainer.appendChild(spinnerIcon);
-    messagesDiv.appendChild(thinkingContainer);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    return thinkingContainer;
-}
-
-/**
- * Populates the FAQ section with clickable questions.
- */
-function populateFAQs() {
-    faqQuestions.forEach(question => {
-        const faqItem = document.createElement('div');
-        faqItem.classList.add('faq-item');
-        faqItem.textContent = question;
-        faqItem.addEventListener('click', () => {
-            userInput.value = question;
-            sendMessage();
+    function populateFAQs() {
+        faqListDiv.innerHTML = ''; // Xóa các item cũ nếu có
+        faqQuestions.forEach(question => {
+            const faqItem = document.createElement('div');
+            faqItem.classList.add('faq-item');
+            faqItem.textContent = question;
+            faqItem.addEventListener('click', () => {
+                userInput.value = question;
+                sendMessage();
+            });
+            faqListDiv.appendChild(faqItem);
         });
-        faqListDiv.appendChild(faqItem);
+    }
+
+    async function fetchAndDisplayScholarships() {
+        scholarshipModal.classList.remove('hidden');
+        scholarshipListContainer.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-pulse"></i></div>';
+        showListView();
+
+        if (allScholarships.length === 0) {
+            try {
+                const response = await fetch('http://127.0.0.1:8000/scholarships');
+                if (!response.ok) throw new Error('Lỗi mạng hoặc server.');
+                allScholarships = await response.json();
+            } catch (error) {
+                console.error('Lỗi khi lấy dữ liệu học bổng:', error);
+                scholarshipListContainer.innerHTML = '<p class="error-message">Không thể tải danh sách học bổng. Vui lòng thử lại sau.</p>';
+                return;
+            }
+        }
+        renderScholarshipList(allScholarships);
+    }
+
+    function renderScholarshipList(scholarships) {
+        scholarshipListContainer.innerHTML = '';
+        if (scholarships.length === 0) {
+            scholarshipListContainer.innerHTML = '<p>Hiện tại không có học bổng nào.</p>';
+            return;
+        }
+        scholarships.forEach(scholarship => {
+            const item = document.createElement('div');
+            item.classList.add('scholarship-item');
+            const deadline = new Date(scholarship.Deadline);
+            const isExpired = deadline < new Date();
+            item.innerHTML = `
+                <div class="scholarship-info">
+                    <h3 class="scholarship-title">${scholarship.Title}</h3>
+                    <p class="scholarship-meta">
+                        <span><i class="fas fa-money-bill-wave"></i> ${scholarship.TotalPrice || 'N/A'}</span>
+                        <span class="${isExpired ? 'expired' : ''}">
+                            <i class="fas fa-clock"></i> Hạn: ${formatDate(scholarship.Deadline)}
+                        </span>
+                    </p>
+                </div>
+                <i class="fas fa-chevron-right"></i>`;
+            if (isExpired) item.classList.add('item-expired');
+            item.addEventListener('click', () => displayScholarshipDetails(scholarship));
+            scholarshipListContainer.appendChild(item);
+        });
+    }
+
+    function displayScholarshipDetails(scholarship) {
+        scholarshipDetailContainer.innerHTML = `
+            <div class="detail-header"><h2>${scholarship.Title}</h2></div>
+            <div class="detail-meta">
+                <p><strong>Loại:</strong> ${scholarship.TypeInfo}</p>
+                <p><strong>Giá trị:</strong> ${scholarship.TotalPrice}</p>
+                <p><strong>Số lượng:</strong> ${scholarship.Quantity} suất</p>
+                <p><strong>Hạn nộp:</strong> ${formatDate(scholarship.Deadline)}</p>
+            </div>
+            <hr>
+            <div class="detail-content">${scholarship.Content}</div>`;
+        showDetailView();
+    }
+
+    function closeModal() {
+        scholarshipModal.classList.add('hidden');
+    }
+
+    function showDetailView() {
+        scholarshipListContainer.classList.add('hidden');
+        scholarshipDetailContainer.classList.remove('hidden');
+        modalTitle.textContent = "Chi tiết Học bổng";
+        
+        if (!document.getElementById('back-to-list-button')) {
+            const backButton = document.createElement('button');
+            backButton.id = 'back-to-list-button';
+            backButton.title = 'Quay lại danh sách';
+            backButton.innerHTML = '<i class="fas fa-arrow-left"></i>';
+            backButton.addEventListener('click', showListView);
+            modalHeader.prepend(backButton);
+        }
+    }
+
+    function showListView() {
+        scholarshipListContainer.classList.remove('hidden');
+        scholarshipDetailContainer.classList.add('hidden');
+        modalTitle.textContent = "Danh sách Học bổng";
+        const backButton = document.getElementById('back-to-list-button');
+        if (backButton) backButton.remove();
+    }
+
+    function formatDate(dateString) {
+        const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' };
+        return new Date(dateString).toLocaleDateString('vi-VN', options);
+    }
+
+    // --- Event Listeners & Initial Setup ---
+    // Gán sự kiện cho các phần tử đã được đảm bảo tồn tại
+    sendButton.addEventListener('click', sendMessage);
+    userInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
     });
-}
+    scholarshipButton.addEventListener('click', fetchAndDisplayScholarships);
+    closeModalButton.addEventListener('click', closeModal);
+    scholarshipModal.addEventListener('click', (e) => {
+        if (e.target === scholarshipModal) closeModal();
+    });
+
+    // Khởi tạo các thành phần ban đầu của trang
+    populateFAQs();
+});
