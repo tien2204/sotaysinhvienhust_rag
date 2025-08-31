@@ -1,0 +1,12 @@
+langchain 
+pinecone-client 
+sentence-transformers 
+pypdf 
+langchain-pinecone 
+langchain-community
+langchain-huggingface
+langchain-google-genai
+dotenv
+langgraph
+fastapi[all]
+uvicorn
