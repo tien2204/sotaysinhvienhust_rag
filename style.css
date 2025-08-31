@@ -10,6 +10,8 @@
     --text-light: #ffffff;
     --text-dark: #333333;
     --border-color: #dddddd;
+    --faq-bg: #eef2f7;
+    --faq-hover-bg: #dbe4f0;
 }
 
 /* ==========================================================================
@@ -37,8 +39,8 @@ body {
 .container {
     width: 100%;
     max-width: 700px;
-    height: 90vh;
-    max-height: 800px;
+    height: 95vh;
+    max-height: 850px;
     background-color: var(--container-bg);
     border-radius: 16px;
     box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
@@ -78,8 +80,6 @@ header h1 {
     padding: 20px;
 }
 
-/* >>> SỬA LỖI TẠI ĐÂY <<< */
-/* Áp dụng flexbox cho #messages, là thẻ cha trực tiếp của các tin nhắn */
 #messages {
     display: flex;
     flex-direction: column;
@@ -92,7 +92,7 @@ header h1 {
 .message {
     padding: 10px 16px;
     border-radius: 18px;
-    max-width: 75%;
+    max-width: 85%;
     line-height: 1.6;
     word-wrap: break-word;
     animation: fadeIn 0.3s ease-out;
@@ -106,7 +106,7 @@ header h1 {
 }
 
 .user-message {
-    align-self: flex-end; /* Thuộc tính này bây giờ sẽ hoạt động chính xác */
+    align-self: flex-end;
     background-color: var(--user-message-bg);
     color: var(--text-light);
     border-bottom-right-radius: 4px;
@@ -122,6 +122,40 @@ header h1 {
         transform: translateY(0);
     }
 }
+
+/* ==========================================================================
+   Mục Câu hỏi thường gặp (FAQ)
+   ========================================================================== */
+.faq-container {
+    padding: 12px 20px;
+    border-top: 1px solid var(--border-color);
+    flex-shrink: 0;
+    overflow-x: auto; /* Cho phép cuộn ngang nếu không đủ chỗ */
+}
+
+.faq-list {
+    display: flex;
+    gap: 8px;
+    padding-bottom: 4px; /* Thêm padding để thanh cuộn không quá sát */
+}
+
+.faq-item {
+    flex-shrink: 0; /* Ngăn các item bị co lại */
+    background-color: var(--faq-bg);
+    color: var(--primary-color);
+    padding: 6px 14px;
+    border-radius: 16px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    white-space: nowrap; /* Giữ câu hỏi trên một dòng */
+}
+
+.faq-item:hover {
+    background-color: var(--faq-hover-bg);
+}
+
 
 /* ==========================================================================
    Phần Footer và ô nhập liệu
@@ -184,7 +218,7 @@ header h1 {
 }
 
 /* ==========================================================================
-   Kiểu dáng cho nội dung Markdown (nếu có)
+   Kiểu dáng cho nội dung Markdown
    ========================================================================== */
 .bot-message h1, .bot-message h2, .bot-message h3, .bot-message p {
     margin: 0;
