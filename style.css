@@ -390,17 +390,7 @@ header h1 {
 .detail-meta p {
     margin-bottom: 8px;
 }
-.detail-content {
-    line-height: 1.7;
-}
-.detail-content p {
-    margin-bottom: 1em;
-}
-.detail-content h1, .detail-content h2, .detail-content h3 {
-    margin-top: 1.5em;
-    margin-bottom: 0.5em;
-    color: var(--primary-color);
-}
+
 
 /* Spinner và thông báo lỗi */
 .loading-spinner {
@@ -884,4 +874,265 @@ header h1 {
 .job-card:hover .job-action {
     color: var(--primary-color);
     transform: translateX(3px);
+}
+
+/* ==========================================================================
+    Nút mở Hoạt động
+   ========================================================================== */
+#activity-button {
+    background: none;
+    border: none;
+    color: var(--text-light);
+    font-size: 1.4rem;
+    cursor: pointer;
+    padding: 0 10px;
+    transition: transform 0.2s;
+    margin-left: 5px;
+}
+#activity-button:hover {
+    transform: scale(1.1);
+}
+
+/* ==========================================================================
+    Giao diện danh sách Hoạt động
+   ========================================================================== */
+#activity-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.activity-card {
+    display: flex;
+    gap: 15px;
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid #eef2f7;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+.activity-card:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+.activity-card-img {
+    width: 100px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+.activity-card-content {
+    display: flex;
+    flex-direction: column;
+}
+.activity-card-type {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--primary-color);
+    margin-bottom: 4px;
+}
+.activity-card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 6px;
+}
+.activity-card-organizer, .activity-card-time {
+    font-size: 0.9rem;
+    color: #777;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* ==========================================================================
+    Giao diện chi tiết Hoạt động
+   ========================================================================== */
+.activity-detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 30px;
+}
+.activity-detail-img {
+    width: 100%;
+    max-height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+.activity-detail-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #222;
+    line-height: 1.3;
+    margin-bottom: 20px;
+}
+.activity-meta-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.activity-meta-item span {
+    font-size: 0.9rem;
+    color: #888;
+    display: block;
+}
+.activity-meta-item p {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #333;
+}
+.deadline-highlight {
+    color: #d9534f;
+    font-weight: bold;
+}
+.content-tabs {
+    display: flex;
+    gap: 1px;
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 20px;
+}
+.tab-button {
+    padding: 10px 20px;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -1px; /* Để border đè lên border của container */
+}
+.tab-button.active {
+    border-bottom-color: var(--primary-color);
+    color: var(--primary-color);
+}
+.activity-detail-right .detail-content ul {
+    list-style-type: disc;
+    padding-left: 25px;
+}
+.activity-detail-right .detail-content li {
+    margin-bottom: 8px;
+}
+/* Thêm vào .activity-detail-right để đảm bảo nó có thể cuộn nếu nội dung dài */
+.activity-detail-right {
+    /* Đảm bảo chiều cao tối đa của cột bên phải */
+    max-height: calc(100vh - 180px); /* Điều chỉnh giá trị 180px cho phù hợp với header/footer của modal */
+    overflow-y: auto; /* Cho phép cuộn dọc */
+    padding-right: 15px; /* Thêm padding để tránh thanh cuộn dính vào chữ */
+    box-sizing: border-box; /* Đảm bảo padding không làm tràn ra ngoài */
+}
+
+/* Thêm hoặc cập nhật cho các block nội dung */
+.activity-detail-right .detail-content,
+.criteria-content { /* Áp dụng cho cả phần mô tả và tiêu chí */
+    word-wrap: break-word; /* Cho phép từ bị ngắt dòng */
+    overflow-wrap: break-word; /* Tương tự word-wrap, hỗ trợ rộng hơn */
+    white-space: pre-wrap; /* Quan trọng để giữ định dạng xuống dòng và khoảng trắng */
+    /* Có thể thêm max-width nếu muốn giới hạn độ rộng tuyệt đối */
+    /* max-width: 100%; */ 
+}
+
+/* Để xử lý các thẻ ảnh bên trong nội dung, nếu có */
+.activity-detail-right .detail-content img {
+    max-width: 100%; /* Đảm bảo ảnh không tràn ra ngoài */
+    height: auto; /* Giữ tỷ lệ khung hình */
+    display: block; /* Tránh khoảng trắng thừa dưới ảnh */
+    margin: 10px 0; /* Thêm khoảng cách trên dưới cho ảnh */
+}
+
+/* Thêm cho các tab và phần chứa nội dung của tab */
+.activity-detail-right .content-tabs {
+    position: sticky; /* Giúp các tab dính ở trên khi cuộn */
+    top: 0;
+    background: #fff;
+    z-index: 10; /* Đảm bảo tab luôn ở trên các nội dung khác */
+    padding-top: 10px; /* Thêm khoảng cách trên nếu cần */
+    margin-bottom: 0; /* Điều chỉnh lại margin để khớp sticky */
+}
+
+/* Đảm bảo scrollbar hiển thị đẹp trên mọi trình duyệt */
+.activity-detail-right::-webkit-scrollbar {
+    width: 8px;
+}
+
+.activity-detail-right::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.activity-detail-right::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+
+.activity-detail-right::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+
+/* Responsive */
+@media (max-width: 768px) {
+    .activity-detail-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ==========================================================================
+    Giao diện phần Tiêu chí (Hoạt động)
+   ========================================================================== */
+.activity-criteria-card {
+    margin-top: 25px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden; /* Ẩn các phần thừa ra ngoài border-radius */
+}
+
+.activity-criteria-card .content-tabs {
+    margin-bottom: 0;
+    border-bottom: 1px solid #ddd;
+    background-color: #f9f9f9;
+}
+
+.activity-criteria-card .tab-button {
+    padding: 10px 15px; /* Giảm padding một chút */
+    font-size: 0.9rem;
+}
+
+.criteria-content {
+    padding: 15px;
+    font-size: 0.9rem;
+    color: #555;
+    line-height: 1.6;
+    /* Dùng pre-wrap để hiển thị đúng các dấu xuống dòng \n */
+    white-space: pre-wrap; 
+}
+
+/* style.css */
+.criteria-content {
+    padding: 15px;
+    font-size: 0.9rem;
+    color: #555;
+    line-height: 1.6;
+    list-style-type: none; /* Bỏ dấu chấm tròn mặc định */
+}
+.criteria-item {
+    padding-left: 1.5em;
+    text-indent: -1.5em; /* Kỹ thuật để căn lề đẹp */
+    margin-bottom: 8px;
+}
+.criteria-item::before {
+    content: '✔'; /* Thêm dấu tick phía trước */
+    color: var(--primary-color);
+    margin-right: 10px;
+    font-weight: bold;
+}
+/* ==========================================================================
+    Sửa lỗi khoảng trắng thừa do thẻ HTML rỗng
+   ========================================================================== */
+
+/* Tìm tất cả các thẻ <p> rỗng bên trong các khu vực nội dung và ẩn chúng đi */
+.detail-content p:empty {
+    display: none;
 }

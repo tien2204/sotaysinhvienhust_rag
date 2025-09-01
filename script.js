@@ -44,8 +44,149 @@ document.addEventListener('DOMContentLoaded', () => {
     const jobsModalTitle = document.getElementById('jobs-modal-title');
     const jobsModalHeader = jobsModal.querySelector('.modal-header');
 
+    const activityButton = document.getElementById('activity-button');
+    const activityModal = document.getElementById('activity-modal');
+    const closeActivityModalButton = document.getElementById('close-activity-modal-button');
+    const activityListContainer = document.getElementById('activity-list-container');
+    const activityDetailContainer = document.getElementById('activity-detail-container');
+    const activityModalTitle = document.getElementById('activity-modal-title');
+    const activityModalHeader = activityModal.querySelector('.modal-header');
+
     // --- Functions ---
     // Các hàm này được định nghĩa bên trong để có thể truy cập các biến DOM ở trên một cách an toàn
+    // Hàm helper để định dạng ngày giờ
+    function formatDateTime(dateTimeString) {
+        if (!dateTimeString) return "N/A";
+        try {
+            const date = new Date(dateTimeString);
+            if (isNaN(date.getTime())) return dateTimeString;
+            const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' };
+            return date.toLocaleString('vi-VN', options).replace(',', '');
+        } catch (e) {
+            return dateTimeString;
+        }
+    }
+
+    function formatDateTimeRange(start, end) {
+        if (!start || !end) return "N/A";
+        return `${formatDateTime(start)} - ${formatDateTime(end)}`;
+    }
+
+    async function openActivityModal() {
+        activityModal.classList.remove('hidden');
+        showActivityListView();
+        await fetchAndDisplayActivities();
+    }
+
+    async function fetchAndDisplayActivities() {
+        activityListContainer.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-pulse"></i></div>';
+        try {
+            const response = await fetch(`${API_BASE_URL}/activities`);
+            if (!response.ok) throw new Error('Không thể tải dữ liệu hoạt động.');
+            const activities = await response.json();
+            renderActivityList(activities);
+        } catch (error) {
+            console.error("Lỗi khi tải hoạt động:", error);
+            activityListContainer.innerHTML = `<p class="error-message">${error.message}</p>`;
+        }
+    }
+
+    function renderActivityList(activities) {
+        activityListContainer.innerHTML = '';
+        if (activities.length === 0) {
+            activityListContainer.innerHTML = '<p>Không có hoạt động nào sắp diễn ra.</p>';
+            return;
+        }
+
+        activities.forEach(activity => {
+            const item = document.createElement('div');
+            item.classList.add('activity-card');
+            item.innerHTML = `
+                <img class="activity-card-img" src="${activity.image_url || 'https://via.placeholder.com/100x70?text=Event'}" alt="Ảnh hoạt động">
+                <div class="activity-card-content">
+                    <span class="activity-card-type">${activity.activity_type}</span>
+                    <h3 class="activity-card-title">${activity.title}</h3>
+                    <p class="activity-card-organizer"><i class="fas fa-user-friends"></i> ${activity.organizer}</p>
+                    <p class="activity-card-time"><i class="fas fa-clock"></i> ${formatDateTime(activity.start_time)}</p>
+                </div>
+            `;
+            item.addEventListener('click', () => displayActivityDetails(activity.id));
+            activityListContainer.appendChild(item);
+        });
+    }
+
+    async function displayActivityDetails(activityId) {
+        showActivityDetailView();
+        // Hiển thị spinner trong khi tải dữ liệu chi tiết
+        activityDetailContainer.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-pulse"></i></div>';
+
+        try {
+            // GỌI API MỚI ĐỂ LẤY DỮ LIỆU CHI TIẾT
+            const response = await fetch(`${API_BASE_URL}/activities/${activityId}`);
+            if (!response.ok) throw new Error('Không thể tải chi tiết hoạt động.');
+            const activity = await response.json();
+
+            // Xử lý và hiển thị danh sách tiêu chí
+            const criteriaHtml = activity.criteria && activity.criteria.length > 0
+                ? activity.criteria.map(c => `<li class="criteria-item">${c}</li>`).join('')
+                : '<li>Không có thông tin tiêu chí cụ thể.</li>';
+
+            activityDetailContainer.innerHTML = `
+                <div class="activity-detail-grid">
+                    <div class="activity-detail-left">
+                        <img class="activity-detail-img" src="${activity.image_url || 'https://via.placeholder.com/300x150?text=Event'}" alt="Ảnh hoạt động">
+                        <h2 class="activity-detail-title">${activity.title}</h2>
+                        <div class="activity-meta-list">
+                            <div class="activity-meta-item"><span>Địa điểm:</span><p>${activity.location}</p></div>
+                            <div class="activity-meta-item"><span>Thời gian:</span><p>${formatDateTimeRange(activity.start_time, activity.finish_time)}</p></div>
+                            <div class="activity-meta-item"><span>BTC:</span><p>${activity.organizer}</p></div>
+                            <div class="activity-meta-item"><span>Hạn nộp MC:</span><p class="deadline-highlight">${formatDateTime(activity.registration_deadline)}</p></div>
+                        </div>
+                        <div class="activity-criteria-card">
+                            <div class="content-tabs"><button class="tab-button active">Tiêu chí</button></div>
+                            <ul class="criteria-content">${criteriaHtml}</ul>
+                        </div>
+                    </div>
+                    <div class="activity-detail-right">
+                        <div class="content-tabs"><button class="tab-button active">Nội dung</button></div>
+                        <div class="detail-content">${activity.description || '<p>Không có thông tin.</p>'}</div>
+                    </div>
+                </div>
+            `;
+        } catch (error) {
+            console.error("Lỗi khi tải chi tiết hoạt động:", error);
+            activityDetailContainer.innerHTML = `<p class="error-message">${error.message}</p>`;
+        }
+    }
+
+
+
+    function closeActivityModal() {
+        activityModal.classList.add('hidden');
+    }
+
+    function showActivityDetailView() {
+        activityListContainer.classList.add('hidden');
+        activityDetailContainer.classList.remove('hidden');
+        activityModalTitle.textContent = "Chi tiết Hoạt động";
+
+        if (!document.getElementById('activity-back-button')) {
+            const backButton = document.createElement('button');
+            backButton.id = 'activity-back-button';
+            backButton.title = 'Quay lại';
+            backButton.innerHTML = '<i class="fas fa-arrow-left"></i>';
+            backButton.addEventListener('click', showActivityListView);
+            activityModalHeader.prepend(backButton);
+        }
+    }
+
+    function showActivityListView() {
+        activityListContainer.classList.remove('hidden');
+        activityDetailContainer.classList.add('hidden');
+        activityModalTitle.textContent = "Hoạt động & Sự kiện";
+        const backButton = document.getElementById('activity-back-button');
+        if (backButton) backButton.remove();
+    }
 
     async function sendMessage() {
         const question = userInput.value.trim();
@@ -436,6 +577,10 @@ document.addEventListener('DOMContentLoaded', () => {
     jobsButton.addEventListener('click', openJobsModal);
     closeJobsModalButton.addEventListener('click', closeJobsModal);
     filterJobsButton.addEventListener('click', fetchAndDisplayJobs);
+
+    // Activity Listeners
+    activityButton.addEventListener('click', openActivityModal);
+    closeActivityModalButton.addEventListener('click', closeActivityModal);
 
     // Khởi tạo các thành phần ban đầu của trang
     populateFAQs();
