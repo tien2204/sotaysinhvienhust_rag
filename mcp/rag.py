@@ -1,37 +1,59 @@
 import os
 from typing import Annotated, List
 
-from langchain_core.messages import BaseMessage, ToolMessage
+from langchain_core.messages import BaseMessage, ToolMessage, AIMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import END, StateGraph
 from langgraph.prebuilt import ToolNode 
-from typing_extensions import TypedDict
+from typing_extensions import TypedDict, Literal
+from dotenv import load_dotenv
+load_dotenv()
 
-from .tools import get_scholarships, search_student_handbook, search_academic_regulations
+from .tools import get_scholarships, search_student_handbook, search_academic_regulations, query_classifier 
 
 # --- Khởi tạo ---
 llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.2)
-tool = [get_scholarships, search_academic_regulations, search_student_handbook]
+tool = [get_scholarships, search_academic_regulations, search_student_handbook, query_classifier]
 
 # Gắn (bind) các tool vào LLM để nó biết cách gọi
 llm_with_tools = llm.bind_tools(tool)
+tool_node = ToolNode(tool)
 
 
 class AgentState(TypedDict):
     messages: Annotated[List[BaseMessage], lambda x, y: x + y]
+    classification: str
 
+def classification_node(state: AgentState):
+    """Node đầu tiên: Luôn chạy kiểm duyệt."""
+    question = state["messages"][-1].content
+    classification_result = query_classifier.invoke({"query": question})
+    print(f"--- CLASSIFICATION RESULT: {classification_result} ---")
+    return {"classification": classification_result}
 
 def agent_node(state: AgentState):
     """
     Gọi LLM để quyết định hành động tiếp theo: trả lời hoặc gọi tool.
     """
-    print("---NODE: AGENT---")
+    print("--- NODE: AGENT---")
     response = llm_with_tools.invoke(state["messages"])
     return {"messages": [response]}
 
+def rejection_node(state: AgentState):
+    """Node xử lý câu hỏi không an toàn."""
+    print("---NODE: REJECTION---")
+    rejection_message = AIMessage(
+        content="Xin lỗi, tôi là trợ lý ảo của Đại học Bách Khoa Hà Nội và chỉ có thể trả lời các câu hỏi liên quan đến quy chế, học bổng và đời sống sinh viên tại trường. Tôi không thể hỗ trợ các chủ đề khác."
+    )
+    return {"messages": [rejection_message]}
 
-tool_node = ToolNode(tool)
+def should_classify(state: AgentState) -> Literal["agent_node", "rejection_node"]:
+    """Quyết định đi đâu sau khi phân loại."""
+    if state["classification"] == "safe":
+        return "agent_node"
+    else:
+        return "rejection_node"
 
 def should_continue(state: AgentState) -> str:
     """
@@ -43,13 +65,23 @@ def should_continue(state: AgentState) -> str:
 
 graph_builder = StateGraph(AgentState)
 
+graph_builder.add_node("classifier", classification_node)
+graph_builder.add_node("rejection", rejection_node)
 graph_builder.add_node("agent", agent_node)
 graph_builder.add_node("action", tool_node)
 
 # Đặt agent là điểm bắt đầu
-graph_builder.set_entry_point("agent")
+graph_builder.set_entry_point("classifier")
 
 # Thêm cạnh điều kiện
+graph_builder.add_conditional_edges(
+    "classifier",
+    should_classify,
+    {
+        "agent_node": "agent",
+        "rejection_node": "rejection"
+    }
+)
 graph_builder.add_conditional_edges(
     "agent",
     should_continue,
@@ -59,9 +91,10 @@ graph_builder.add_conditional_edges(
         "end": END,
     },
 )
-
-# Sau khi thực thi tool, quay lại agent để nó xử lý kết quả
+# Các cạnh cố định
 graph_builder.add_edge("action", "agent")
+graph_builder.add_edge("rejection", END)
+
 
 # Biên dịch graph thành một đối tượng có thể chạy được
 graph = graph_builder.compile()
@@ -103,4 +136,4 @@ def get_response(question: str) -> str:
     return final_answer
 
 if __name__ == "__main__":
-    print(get_response("Cho tôi biết về chính sách học bổng của HUST và thông tin chi tiết học bổng doanh nghiệp trong tháng trước"))
+    print(get_response("Thủ tướng Việt Nam là ai?"))
