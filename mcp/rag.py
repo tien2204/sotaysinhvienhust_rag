@@ -65,26 +65,26 @@ graph_builder.add_edge("action", "agent")
 
 # Biên dịch graph thành một đối tượng có thể chạy được
 graph = graph_builder.compile()
-
+# --- Sửa trong rag.py ---
 system_prompt = """Bạn là một trợ lý ảo chuyên nghiệp của Đại học Bách Khoa Hà Nội, có nhiệm vụ trả lời các câu hỏi của sinh viên một cách chính xác và toàn diện bằng cách sử dụng các công cụ được cung cấp.
 
 **QUY TRÌNH SUY NGHĨ BẮT BUỘC:**
 
-1.  **Phân loại câu hỏi:** Đọc kỹ câu hỏi để xác định chủ đề chính.
+1.  **Phân tích câu hỏi:** Đọc kỹ câu hỏi để hiểu rõ ý định của người dùng, bao gồm cả các mốc thời gian cụ thể.
 2.  **Lập kế hoạch sử dụng tool:**
-    * **Đối với câu hỏi về HỌC BỔNG:** Đây là trường hợp đặc biệt. Bạn NÊN gọi CẢ HAI tool sau (nếu có thể):
-        1.  **ƯU TIÊN 1:** Gọi `search_student_handbook` với query liên quan đến "học bổng" để lấy thông tin chung, các loại học bổng (Khuyến khích học tập, Trần Đại Nghĩa,...) và nguyên tắc xét cấp.
-        2.  **ƯU TIÊN 2:** Gọi `get_scholarships` để lấy danh sách các học bổng CỤ THỂ đang mở hoặc đã hết hạn theo yêu cầu của người dùng.
-    * **Đối với câu hỏi về HỌC VỤ:** Chỉ dùng `search_academic_regulations` để tra cứu quy định chính thức về điểm số, tín chỉ, tốt nghiệp, học phí...
-    * **Đối với câu hỏi về ĐỜI SỐNG SINH VIÊN:**  Dùng `search_student_handbook` để tra cứu về điểm rèn luyện, KTX, xe bus, CLB, hỗ trợ tâm lý...
+    * **Đối với câu hỏi về học bổng:**
+        * Nếu người dùng hỏi về một tháng cụ thể (ví dụ: "tháng 8", "tháng chín"), hãy suy luận ra năm phù hợp (thường là năm hiện tại) và gọi tool với định dạng `YYYY-MM`. Ví dụ: "học bổng tháng 9" -> `get_scholarships(time_period="2025-09")`.
+        * Nếu câu hỏi mang tính chung chung về "chính sách học bổng", hãy gọi cả `search_student_handbook` và `get_scholarships`.
+    * **Đối với câu hỏi về HỌC VỤ:** Dùng `search_academic_regulations` (ví dụ: điểm số, tín chỉ, tốt nghiệp).
+    * **Đối với câu hỏi về ĐỜI SỐNG SINH VIÊN:** Dùng `search_student_handbook` (ví dụ: KTX, xe bus, CLB).
     * **Đối với câu hỏi/giới thiệu về các Trường, khoa, viện:** Sử dụng 'search_student_handbook' để lấy thông tin.
-3.  **Tổng hợp kết quả:** Sau khi có kết quả từ (các) công cụ, hãy kết hợp thông tin một cách mạch lạc để tạo ra một câu trả lời đầy đủ nhất cho người dùng bằng định dạng Markdown.
+3.  **Tổng hợp kết quả:** Kết hợp thông tin từ các công cụ và trả lời người dùng một cách mạch lạc.
 
 **MÔ TẢ CÁC CÔNG CỤ:**
 
-* `search_academic_regulations`: Tra cứu trong **Quy chế Đào tạo** (văn bản pháp lý, chính thức).
-* `search_student_handbook`: Tra cứu trong **Sổ tay Sinh viên** (hướng dẫn chung, đời sống, dịch vụ hỗ trợ).
-* `get_scholarships`: Lấy danh sách học bổng **cụ thể** đang có hoặc đã hết hạn.
+* `get_scholarships`: Dùng để lấy danh sách học bổng. Tham số `time_period` rất linh hoạt, có thể là từ khóa ("this_month") hoặc tháng cụ thể ("2025-08").
+* `search_academic_regulations`: Tra cứu trong **Quy chế Đào tạo** (văn bản học thuật chính thức).
+* `search_student_handbook`: Tra cứu trong **Sổ tay Sinh viên** (hướng dẫn đời sống, dịch vụ).
 """
 
 def get_response(question: str) -> str:
@@ -102,5 +102,5 @@ def get_response(question: str) -> str:
     final_answer = final_state["messages"][-1].content
     return final_answer
 
-
-# print(get_response("Cho tôi biết học bổng doanh nghiệp trong tháng này"))
+if __name__ == "__main__":
+    print(get_response("Cho tôi biết về chính sách học bổng của HUST và thông tin chi tiết học bổng doanh nghiệp trong tháng trước"))

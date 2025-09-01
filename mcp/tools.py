@@ -56,32 +56,30 @@ def search_academic_regulations(query: str) -> List[str]:
     return get_similar_doc(query, namespace="QCDT2025")
 
 # --- Định nghĩa Tool 2: Lấy Học bổng theo Ngày ---
-@tool
+# @tool
 def get_scholarships(
     time_period: str = "upcoming", status: str = "all"
 ) -> List[Dict]:
     """
     Sử dụng để lấy danh sách học bổng, có thể lọc theo thời gian và trạng thái (còn hạn/hết hạn).
     
-    Tham số `status` chấp nhận:
-    - "open": (Mặc định) Học bổng còn hạn.
-    - "expired": Học bổng đã hết hạn.
-    - "all": Tất cả học bổng.
+    Tham số `status` chấp nhận: "open", "expired", "all".
     
-    Tham số `time_period` để lọc deadline trong khoảng thời gian, chấp nhận:
-    - "upcoming": (Mặc định) Học bổng có hạn trong 30 ngày tới.
-    - "this_week", "this_month": Tuần này, tháng này.
-    - "last_7_days", "last_month": 7 ngày qua, tháng trước.
+    Tham số `time_period` chấp nhận:
+    - Các từ khóa: "upcoming", "this_week", "this_month", "last_7_days", "last_month".
+    - Tháng cụ thể: chuỗi "YYYY-MM" (ví dụ: "2025-08" cho tháng 8 năm 2025).
+    - Ngày cụ thể: chuỗi "YYYY-MM-DD" (ví dụ: "2025-09-01").
     """
     print(f"---TOOL: get_scholarships (time_period: {time_period}, status: {status})---")
 
-    all_scholarships = crawl_all_scholarships()[:2]
+    all_scholarships = crawl_all_scholarships()
     if not all_scholarships:
         return [{"error": "Không thể crawl dữ liệu học bổng."}]
 
-    # --- Logic xác định khoảng thời gian (không đổi) ---
     today = datetime.now()
     start_dt, end_dt = None, None
+
+    # --- Logic thông minh để xác định khoảng thời gian ---
     time_period_mapping = {
         "upcoming": (today, today + timedelta(days=30)),
         "this_week": (today - timedelta(days=today.weekday()), (today - timedelta(days=today.weekday())) + timedelta(days=6)),
@@ -89,12 +87,28 @@ def get_scholarships(
         "last_7_days": (today - timedelta(days=7), today),
         "last_month": ((today.replace(day=1) - timedelta(days=1)).replace(day=1), today.replace(day=1) - timedelta(days=1)),
     }
+
     if time_period in time_period_mapping:
         start_dt, end_dt = time_period_mapping[time_period]
-        start_dt = start_dt.replace(hour=0, minute=0, second=0)
-        end_dt = end_dt.replace(hour=23, minute=59, second=59)
     else:
-        return [{"error": f"Giá trị time_period không hợp lệ: {time_period}"}]
+        # **LOGIC MỚI: Cố gắng diễn giải time_period như một ngày/tháng cụ thể**
+        try:
+            # Thử định dạng YYYY-MM (cho cả tháng)
+            parsed_date = datetime.strptime(time_period, "%Y-%m")
+            start_dt = parsed_date.replace(day=1)
+            last_day = calendar.monthrange(parsed_date.year, parsed_date.month)[1]
+            end_dt = parsed_date.replace(day=last_day)
+        except ValueError:
+            try:
+                # Thử định dạng YYYY-MM-DD (cho ngày cụ thể)
+                parsed_date = datetime.strptime(time_period, "%Y-%m-%d")
+                start_dt = end_dt = parsed_date
+            except ValueError:
+                return [{"error": f"Giá trị time_period '{time_period}' không hợp lệ. Phải là từ khóa hoặc theo định dạng YYYY-MM, YYYY-MM-DD."}]
+
+    # Đảm bảo bao trọn cả ngày
+    start_dt = start_dt.replace(hour=0, minute=0, second=0)
+    end_dt = end_dt.replace(hour=23, minute=59, second=59)
 
     # --- Lọc học bổng (ĐÃ SỬA LỖI) ---
     filtered_list = []
@@ -125,4 +139,5 @@ def get_scholarships(
 
     return filtered_list
 
-# print(get_scholarships("this_month", "all"))
+if __name__ == "__main__":
+    print(get_scholarships("2025-08", "all"))
