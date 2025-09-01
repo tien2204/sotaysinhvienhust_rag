@@ -1,5 +1,6 @@
 // Các biến và dữ liệu toàn cục không phụ thuộc vào DOM
 let allScholarships = []; 
+const API_BASE_URL = "http://127.0.0.1:8000";
 const faqQuestions = [
     "Làm thế nào để đạt điểm rèn luyện loại Giỏi?",
     "Thông tin về học bổng ở đâu?",
@@ -29,6 +30,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const scholarshipDetailContainer = document.getElementById('scholarship-detail-container');
     const modalTitle = document.getElementById('modal-title');
     const modalHeader = document.querySelector('.modal-header');
+    
+    // Job model element
+    const jobsButton = document.getElementById('jobs-button');
+    const jobsModal = document.getElementById('jobs-modal');
+    const closeJobsModalButton = document.getElementById('close-jobs-modal-button');
+    const filterJobsButton = document.getElementById('filter-jobs-button');
+    const jobListView = document.getElementById('job-list-view');
+    const jobListContainer = document.getElementById('job-list-container');
+    const jobDetailContainer = document.getElementById('job-detail-container');
+    const careerFilter = document.getElementById('career-filter');
+    const cityFilter = document.getElementById('city-filter');
+    const jobsModalTitle = document.getElementById('jobs-modal-title');
+    const jobsModalHeader = jobsModal.querySelector('.modal-header');
 
     // --- Functions ---
     // Các hàm này được định nghĩa bên trong để có thể truy cập các biến DOM ở trên một cách an toàn
@@ -42,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const thinkingMessage = addThinkingAnimation();
 
         try {
-            const response = await fetch('http://127.0.0.1:8000/ask', {
+            const response = await fetch(`${API_BASE_URL}/ask`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ question: question })
@@ -193,6 +207,234 @@ document.addEventListener('DOMContentLoaded', () => {
         return new Date(dateString).toLocaleDateString('vi-VN', options);
     }
 
+    async function openJobsModal() {
+        jobsModal.classList.remove('hidden');
+        showJobListView();
+        
+        // Chỉ tải bộ lọc một lần đầu tiên
+        if (careerFilter.options.length <= 1) {
+            await populateCareerFilter();
+        }
+        if (cityFilter.options.length <= 1) {
+            await populateCityFilter();
+        }
+
+        // Tự động tìm kiếm việc làm mới khi mở modal
+        fetchAndDisplayJobs();
+    }
+
+    async function populateCareerFilter() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/jobs/careers`);
+            const careers = await response.json();
+            careers.forEach(career => {
+                const option = document.createElement('option');
+                option.value = career;
+                option.textContent = career;
+                careerFilter.appendChild(option);
+            });
+        } catch (error) {
+            console.error("Lỗi khi tải danh sách chuyên ngành:", error);
+        }
+    }
+
+    async function populateCityFilter() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/jobs/cities`);
+            const cities = await response.json();
+            cities.forEach(city => {
+                const option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                cityFilter.appendChild(option);
+            });
+        } catch (error) {
+            console.error("Lỗi khi tải danh sách thành phố:", error);
+        }
+    }
+
+    async function fetchAndDisplayJobs() {
+        jobListContainer.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-pulse"></i></div>';
+        
+        // 1. Lấy các giá trị từ bộ lọc
+        const jobType = document.querySelector('input[name="job-type"]:checked').value;
+        const career = careerFilter.value;
+        const city = cityFilter.value;
+
+        // 2. Xây dựng URL với các tham số
+        const params = new URLSearchParams({ job_type: jobType });
+        if (career) {
+            params.append('career', career);
+        }
+        if (city) {
+            params.append('city', city);
+        }
+        
+        const url = `${API_BASE_URL}/jobs?${params.toString()}`;
+        
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Không thể tải dữ liệu việc làm.');
+            const jobs = await response.json();
+            renderJobList(jobs);
+        } catch(error) {
+            console.error("Lỗi khi tìm kiếm việc làm:", error);
+            jobListContainer.innerHTML = `<p class="error-message">${error.message}</p>`;
+        }
+    }
+
+    function renderJobList(jobs) {
+        jobListContainer.innerHTML = '';
+        if (jobs.length === 0) {
+            jobListContainer.innerHTML = '<p style="text-align: center; padding: 20px;">Không tìm thấy việc làm nào phù hợp.</p>';
+            return;
+        }
+
+        jobs.forEach(job => {
+            const item = document.createElement('div');
+            item.classList.add('job-card'); // Sử dụng class mới là job-card
+
+            // Thêm logo công ty (dùng placeholder) và nội dung chính
+            item.innerHTML = `
+                <div class="job-logo">
+                    
+
+    <div class="logo-placeholder">${job.company_name.charAt(0)}</div>
+                </div>
+                <div class="job-content">
+                    <h3 class="job-title">${job.title}</h3>
+                    <p class="job-company">${job.company_name}</p>
+                    <div class="job-meta">
+                        <span title="Mức lương"><i class="fas fa-money-bill-wave"></i> ${job.salary}</span>
+                        <span title="Địa điểm"><i class="fas fa-map-marker-alt"></i> ${job.location}</span>
+                        <span title="Hạn nộp"><i class="fas fa-clock"></i> ${formatDateShort(job.deadline)}</span>
+                    </div>
+                </div>
+                <div class="job-action">
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+            `;
+            item.addEventListener('click', () => displayJobDetails(job));
+            jobListContainer.appendChild(item);
+        });
+    }
+
+    function displayJobDetails(job) {
+        jobDetailContainer.innerHTML = `
+            <div class="job-detail-grid">
+                <div class="job-detail-left-column">
+                    <div class="job-company-logo">
+                        <img src="https://via.placeholder.com/100x40?text=${encodeURIComponent(job.company_name)}" alt="${job.company_name} Logo">
+                    </div>
+                    <h2 class="job-detail-title">${job.title}</h2>
+                    <p class="job-detail-company">${job.company_name}</p>
+                    
+                    <div class="job-detail-info-tags">
+                        <div>
+                            <span class="icon-text"><i class="fas fa-money-bill-wave"></i> Mức lương:</span>
+                            <p>${job.salary}</p>
+                        </div>
+                        <div>
+                            <span class="icon-text"><i class="fas fa-map-marker-alt"></i> Nơi làm việc:</span>
+                            <p>${job.location}</p>
+                        </div>
+                        <div>
+                            <span class="icon-text"><i class="fas fa-clock"></i> Hạn nộp:</span>
+                            <p>${formatDateShort(job.deadline)}</p>
+                        </div>
+                        <div>
+                            <span class="icon-text"><i class="fas fa-users"></i> Số lượng:</span>
+                            <p>${job.positions_available} suất</p>
+                        </div>
+                    </div>
+
+                    <div class="job-detail-section info-section">
+                        <h3>Thông tin tuyển dụng</h3>
+                        <p><strong>Kinh nghiệm:</strong> ${job.experience_required}</p>
+                        <p><strong>Bằng cấp:</strong> Cử nhân</p> 
+                        <p><strong>Làm việc:</strong> Toàn thời gian cố định</p>
+                        <p><strong>Vị trí:</strong> Nhân viên</p>
+                        <p><strong>Chuyên ngành:</strong></p>
+                        <div class="career-tags">
+                            ${job.majors_required.split(',').map(major => major.trim() ? `<span class="career-tag">${major.trim()}</span>` : '').join('')}
+                        </div>
+                    </div>
+
+                    <div class="job-detail-section info-section">
+                        <h3>Thông tin liên hệ</h3>
+                        <p><strong>Đại diện:</strong> ${job.contact_name || 'N/A'}</p>
+                        <p><strong>Địa chỉ:</strong> ${job.location || 'N/A'}</p>
+                        <p><strong>Email:</strong> ${job.contact_email || 'N/A'}</p>
+                        <p><strong>Điện thoại:</strong> ${job.contact_phone || 'N/A'}</p>
+                    </div>
+                </div>
+
+                <div class="job-detail-right-column">
+                    <div class="job-detail-section">
+                        <h3>Mô tả công việc</h3>
+                        <div class="detail-content">${job.description || '<p>Không có thông tin.</p>'}</div>
+                    </div>
+
+                    <div class="job-detail-section">
+                        <h3>Quyền lợi được hưởng</h3>
+                        <div class="detail-content">${job.benefits || '<p>Không có thông tin.</p>'}</div>
+                    </div>
+
+                    <div class="job-detail-section">
+                        <h3>Yêu cầu công việc</h3>
+                        <div class="detail-content">${job.requirements || '<p>Không có thông tin.</p>'}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        showJobDetailView();
+    }
+
+    // Thêm hàm formatDateShort để định dạng ngày ngắn gọn hơn
+    function formatDateShort(dateString) {
+        if (!dateString || dateString === "Không có hạn nộp") return "N/A";
+        try {
+            const date = new Date(dateString);
+            // Kiểm tra nếu ngày không hợp lệ
+            if (isNaN(date.getTime())) {
+                return dateString; // Trả về chuỗi gốc nếu không thể parse
+            }
+            const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+            return date.toLocaleDateString('vi-VN', options);
+        } catch (e) {
+            console.error("Lỗi định dạng ngày:", e, dateString);
+            return dateString;
+        }
+    }
+
+    function closeJobsModal() {
+        jobsModal.classList.add('hidden');
+    }
+
+    function showJobDetailView() {
+        jobListView.classList.add('hidden');
+        jobDetailContainer.classList.remove('hidden');
+        jobsModalTitle.textContent = "Chi tiết Việc làm";
+        
+        if (!document.getElementById('job-back-button')) {
+            const backButton = document.createElement('button');
+            backButton.id = 'job-back-button';
+            backButton.title = 'Quay lại';
+            backButton.innerHTML = '<i class="fas fa-arrow-left"></i>';
+            backButton.addEventListener('click', showJobListView);
+            jobsModalHeader.prepend(backButton);
+        }
+    }
+
+    function showJobListView() {
+        jobListView.classList.remove('hidden');
+        jobDetailContainer.classList.add('hidden');
+        jobsModalTitle.textContent = "Việc làm & Thực tập";
+        const backButton = document.getElementById('job-back-button');
+        if (backButton) backButton.remove();
+    }
+
+
     // --- Event Listeners & Initial Setup ---
     // Gán sự kiện cho các phần tử đã được đảm bảo tồn tại
     sendButton.addEventListener('click', sendMessage);
@@ -204,6 +446,11 @@ document.addEventListener('DOMContentLoaded', () => {
     scholarshipModal.addEventListener('click', (e) => {
         if (e.target === scholarshipModal) closeModal();
     });
+
+    // Job Listeners
+    jobsButton.addEventListener('click', openJobsModal);
+    closeJobsModalButton.addEventListener('click', closeJobsModal);
+    filterJobsButton.addEventListener('click', fetchAndDisplayJobs);
 
     // Khởi tạo các thành phần ban đầu của trang
     populateFAQs();

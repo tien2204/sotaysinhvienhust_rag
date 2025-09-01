@@ -1,8 +1,10 @@
 from mcp.scholarship import *
 from mcp.rag import *
-from fastapi import FastAPI, HTTPException
+from mcp.jobs import *
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from enum import Enum
 
 app = FastAPI()
 
@@ -17,6 +19,11 @@ app.add_middleware(
 
 class QuestionRequest(BaseModel):
     question: str
+
+class JobType(str, Enum):
+    hot = "hot"
+    new = "new"
+    internship = "internship"
 
 @app.post("/ask")
 def ask_question(request: QuestionRequest):
@@ -42,7 +49,53 @@ async def get_scholarships():
         return scholarships_data
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Lỗi server nội bộ: {str(e)}")
-    
+
+@app.get("/jobs", response_model=List[dict])
+async def get_jobs(
+    job_type: JobType,
+    career: Optional[str] = Query(None, description="Tên chuyên ngành cần lọc, ví dụ: 'công nghệ thông tin'"),
+    city: Optional[str] = Query(None, description="Tên tỉnh/thành phố cần lọc, ví dụ: 'Hà Nội'")
+):
+    """
+    Lấy danh sách việc làm, có thể lọc theo chuyên ngành (không phân biệt hoa/thường) và thành phố.
+    """
+    location_mapping = {"hot": 1, "new": 2, "internship": 3}
+    location_code = location_mapping[job_type.value]
+
+    career_id = None
+    if career:
+        career_id = CAREER_MAP_LOWER.get(career.lower())
+        
+        if career_id:
+            print(f"Đã tìm thấy chuyên ngành '{career}' với ID: {career_id}")
+        else:
+            print(f"Không tìm thấy chuyên ngành '{career}' trong danh sách.")
+
+    if city and city not in VIETNAM_CITIES:
+        raise HTTPException(status_code=400, detail="Tên thành phố không hợp lệ.")
+        
+    try:
+        jobs_data = fetch_jobs(
+            location_code=location_code,
+            career=career,
+            city=city
+        )
+        if jobs_data is None:
+             raise HTTPException(status_code=500, detail="Không thể crawl dữ liệu việc làm.")
+        return jobs_data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi server nội bộ.")
+
+@app.get("/jobs/careers", response_model=List[str])
+async def get_careers():
+    """Cung cấp danh sách các chuyên ngành để lọc."""
+    return list(CAREER_MAP.keys())
+
+@app.get("/jobs/cities", response_model=List[str])
+async def get_cities():
+    """Cung cấp danh sách các tỉnh/thành phố để lọc."""
+    return VIETNAM_CITIES
+
 import uvicorn
 if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)

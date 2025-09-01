@@ -17,6 +17,10 @@
             <button id="scholarship-button" title="Xem học bổng">
                 <i class="fas fa-graduation-cap"></i>
             </button>
+
+            <button id="jobs-button" title="Xem việc làm">
+                <i class="fas fa-briefcase"></i>
+            </button>
         </header>
 
         <main class="chat-box">
@@ -58,6 +62,53 @@
                 <div id="scholarship-list-container">
                     </div>
                 <div id="scholarship-detail-container" class="hidden">
+                    </div>
+            </main>
+        </div>
+    </div>
+
+    <div id="jobs-modal" class="modal hidden">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h2 id="jobs-modal-title">Việc làm & Thực tập</h2>
+                <button id="close-jobs-modal-button" title="Đóng"><i class="fas fa-times"></i></button>
+            </header>
+            <main class="modal-body">
+                <div id="job-list-view"> 
+                    <div class="filter-bar">
+                        <div class="filter-group">
+                            <label>Loại tin:</label>
+                            <div class="radio-group">
+                                <input type="radio" id="job-type-new" name="job-type" value="new" checked>
+                                <label for="job-type-new">Việc làm mới</label>
+                                <input type="radio" id="job-type-hot" name="job-type" value="hot">
+                                <label for="job-type-hot">Việc làm hot</label>
+                                <input type="radio" id="job-type-internship" name="job-type" value="internship">
+                                <label for="job-type-internship">Thực tập</label>
+                            </div>
+                        </div>
+                        <div class="filter-group">
+                            <label for="career-filter">Chuyên ngành:</label>
+                            <select id="career-filter">
+                                <option value="">Tất cả chuyên ngành</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="city-filter">Địa điểm:</label>
+                            <select id="city-filter">
+                                <option value="">Tất cả địa điểm</option>
+                            </select>
+                        </div>
+                        <div class="filter-group-button">
+                            <button id="filter-jobs-button"><i class="fas fa-search"></i> Tìm kiếm</button>
+                        </div>
+                    </div>
+
+                    <div id="job-list-container">
+                        </div>
+                </div>
+
+                <div id="job-detail-container" class="hidden">
                     </div>
             </main>
         </div>
