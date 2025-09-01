@@ -53,9 +53,18 @@ def html_to_text(html_string: str) -> str:
 
 def parse_job_data(raw_job: dict) -> dict:
     """
-    Nhận một dictionary tin tuyển dụng thô và trả về một dictionary sạch.
+    Nhận một dictionary tin tuyển dụng thô và trả về một dictionary sạch,
+    có bổ sung DocumentId và link gốc.
     """
+    # Lấy DocumentId
+    doc_id = raw_job.get("DocumentId")
+    
+    # Tạo link nguồn, chỉ tạo nếu có doc_id
+    source_link = f"https://ctsv.hust.edu.vn/#/doanh-nghiep/chi-tiet-bai-dang/{doc_id}" if doc_id else None
+    
     return {
+        "document_id": doc_id, 
+        "source_link": source_link, 
         "title": raw_job.get("Title", "Chưa có tiêu đề"),
         "company_name": raw_job.get("CompanyName", "Không rõ tên công ty"),
         "salary": raw_job.get("AmountType", "Theo thỏa thuận"),
@@ -65,11 +74,9 @@ def parse_job_data(raw_job: dict) -> dict:
         "experience_required": raw_job.get("WorkExperience", "Không yêu cầu"),
         "majors_required": raw_job.get("CareerRequire", "Không yêu cầu cụ thể"),
         "positions_available": raw_job.get("QuantityCandidate", 1),
-        
         "description": raw_job.get("WorkDescription", ""),
         "requirements": raw_job.get("WorkRequire", ""),
         "benefits": raw_job.get("Benefit", ""),
-        
         "contact_name": raw_job.get("ContactName"),
         "contact_email": raw_job.get("ContactEmail"),
         "contact_phone": raw_job.get("ContactPhone")

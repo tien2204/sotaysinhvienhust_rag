@@ -562,6 +562,53 @@ header h1 {
 /* ==========================================================================
     Danh sách & Chi tiết Việc làm
    ========================================================================== */
+
+.info-card h4 {
+    font-size: 1.1rem; /* Tăng kích thước chữ */
+    font-weight: 700; /* In đậm hơn */
+    margin-bottom: 15px;
+    padding-bottom: 10px; /* Thêm khoảng cách dưới */
+    border-bottom: 1px solid #ddd; /* Thêm đường gạch chân */
+    text-transform: uppercase;
+    color: var(--primary-color); /* Dùng màu chủ đạo */
+    letter-spacing: 0.5px; /* Tăng khoảng cách ký tự */
+}
+
+.info-card p:last-child {
+    margin-bottom: 0; /* Bỏ khoảng cách cho dòng cuối cùng */
+}
+
+.info-card p strong {
+    font-weight: 600;
+    color: #555; /* Màu của label */
+    margin-right: 10px; /* Thêm khoảng cách phải */
+}
+
+.info-card p span {
+    font-weight: 500;
+    text-align: right; /* Căn giá trị về phía bên phải */
+}
+
+.info-card {
+    background-color: #f7f8fa;
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+/* 1. Sửa các dòng thông tin không bị sít nhau */
+.info-card p {
+    display: flex; /* Dùng flexbox để tách label và value */
+    justify-content: space-between; /* Đẩy label và value ra hai bên */
+    align-items: baseline; /* Căn chỉnh theo dòng cơ sở */
+    font-size: 0.95rem;
+    color: #333; /* Tăng độ tương phản cho dễ đọc */
+    margin-bottom: 14px; /* Tăng khoảng cách giữa các dòng */
+    line-height: 1.5;
+}
+
+
 .job-detail-grid {
     display: grid;
     grid-template-columns: 1fr 2fr; /* Cột trái nhỏ hơn, cột phải lớn hơn */
@@ -726,6 +773,28 @@ header h1 {
     .job-detail-info-tags > div {
         min-width: 100%; /* Mỗi tag một hàng */
     }
+}
+
+.job-detail-source-link {
+    display: inline-block;
+    padding: 10px 18px;
+    margin: 15px 0;
+    background-color: var(--primary-color);
+    margin-bottom: 25px;
+    color: white;
+    text-decoration: none;
+    font-weight: 600;
+    border-radius: 6px;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.job-detail-source-link:hover {
+    background-color: #0a3d8f;
+    transform: translateY(-1px);
+}
+
+.job-detail-source-link i {
+    margin-right: 8px;
 }
 
 /* ==========================================================================

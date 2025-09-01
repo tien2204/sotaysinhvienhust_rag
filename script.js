@@ -320,52 +320,39 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function displayJobDetails(job) {
+        const majorsHtml = job.majors_required
+            .split(',')
+            .map(major => major.trim() ? `<span class="career-tag">${major.trim()}</span>` : '')
+            .join('');
+
+        // Tạo HTML cho nút link gốc, chỉ hiển thị nếu có link
+        const sourceLinkHtml = job.source_link 
+            ? `<a href="${job.source_link}" class="job-detail-source-link" target="_blank" rel="noopener noreferrer">
+                <i class="fas fa-external-link-alt"></i> Xem tin gốc
+            </a>`
+            : '';
+
         jobDetailContainer.innerHTML = `
             <div class="job-detail-grid">
                 <div class="job-detail-left-column">
-                    <div class="job-company-logo">
-                        <img src="https://via.placeholder.com/100x40?text=${encodeURIComponent(job.company_name)}" alt="${job.company_name} Logo">
-                    </div>
                     <h2 class="job-detail-title">${job.title}</h2>
                     <p class="job-detail-company">${job.company_name}</p>
                     
-                    <div class="job-detail-info-tags">
-                        <div>
-                            <span class="icon-text"><i class="fas fa-money-bill-wave"></i> Mức lương:</span>
-                            <p>${job.salary}</p>
-                        </div>
-                        <div>
-                            <span class="icon-text"><i class="fas fa-map-marker-alt"></i> Nơi làm việc:</span>
-                            <p>${job.location}</p>
-                        </div>
-                        <div>
-                            <span class="icon-text"><i class="fas fa-clock"></i> Hạn nộp:</span>
-                            <p>${formatDateShort(job.deadline)}</p>
-                        </div>
-                        <div>
-                            <span class="icon-text"><i class="fas fa-users"></i> Số lượng:</span>
-                            <p>${job.positions_available} suất</p>
-                        </div>
+                    ${sourceLinkHtml}
+                    
+                    <div class="info-card">
+                        <p><strong>Mức lương:</strong><span>${job.salary}</span></p>
+                        <p><strong>Nơi làm việc:</strong><span>${job.location}</span></p>
+                        <p><strong>Hạn nộp:</strong><span>${formatDateShort(job.deadline)}</span></p>
+                        <p><strong>Số lượng:</strong><span>${job.positions_available}</span></p>
                     </div>
 
-                    <div class="job-detail-section info-section">
-                        <h3>Thông tin tuyển dụng</h3>
-                        <p><strong>Kinh nghiệm:</strong> ${job.experience_required}</p>
-                        <p><strong>Bằng cấp:</strong> Cử nhân</p> 
-                        <p><strong>Làm việc:</strong> Toàn thời gian cố định</p>
-                        <p><strong>Vị trí:</strong> Nhân viên</p>
+                    <div class="info-card">
+                        <h4>Thông tin tuyển dụng</h4>
+                        <p><strong>Kinh nghiệm:</strong><span>${job.experience_required}</span></p>
+                        <p><strong>Loại hình:</strong><span>${job.work_type}</span></p>
                         <p><strong>Chuyên ngành:</strong></p>
-                        <div class="career-tags">
-                            ${job.majors_required.split(',').map(major => major.trim() ? `<span class="career-tag">${major.trim()}</span>` : '').join('')}
-                        </div>
-                    </div>
-
-                    <div class="job-detail-section info-section">
-                        <h3>Thông tin liên hệ</h3>
-                        <p><strong>Đại diện:</strong> ${job.contact_name || 'N/A'}</p>
-                        <p><strong>Địa chỉ:</strong> ${job.location || 'N/A'}</p>
-                        <p><strong>Email:</strong> ${job.contact_email || 'N/A'}</p>
-                        <p><strong>Điện thoại:</strong> ${job.contact_phone || 'N/A'}</p>
+                        <div class="career-tags">${majorsHtml}</div>
                     </div>
                 </div>
 
@@ -374,12 +361,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         <h3>Mô tả công việc</h3>
                         <div class="detail-content">${job.description || '<p>Không có thông tin.</p>'}</div>
                     </div>
-
                     <div class="job-detail-section">
                         <h3>Quyền lợi được hưởng</h3>
                         <div class="detail-content">${job.benefits || '<p>Không có thông tin.</p>'}</div>
                     </div>
-
                     <div class="job-detail-section">
                         <h3>Yêu cầu công việc</h3>
                         <div class="detail-content">${job.requirements || '<p>Không có thông tin.</p>'}</div>
