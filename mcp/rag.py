@@ -8,11 +8,20 @@ from langgraph.graph import END, StateGraph
 from langgraph.prebuilt import ToolNode 
 from typing_extensions import TypedDict, Literal
 from dotenv import load_dotenv
+import os
+
 load_dotenv()
 
 from .tools import get_scholarships, search_student_handbook, search_academic_regulations, query_classifier 
 
 # --- Khởi tạo ---
+
+# Tùy chọn: Đặt tên cho project của bạn trên LangSmith
+os.environ["LANGCHAIN_PROJECT"] = "HUST-AI-Assistant"
+
+# Tùy chọn: Bật chế độ debug để có nhiều thông tin chi tiết hơn
+os.environ["LANGCHAIN_TRACING_V2"] = "true" 
+
 llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.2)
 tool = [get_scholarships, search_academic_regulations, search_student_handbook, query_classifier]
 

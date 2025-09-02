@@ -30,8 +30,9 @@ class JobType(str, Enum):
     
 class TTSRequest(BaseModel):
     text: str
+    speaker_id : int = 1
 
-EXTERNAL_TTS_URL = "https://133459782503.ngrok-free.app"
+EXTERNAL_TTS_URL = "https://70115612abd8.ngrok-free.app"
 @app.post("/tts", summary="Tổng hợp văn bản thành giọng nói với logic ưu tiên")
 async def text_to_speech(request: TTSRequest):
     """
@@ -40,12 +41,12 @@ async def text_to_speech(request: TTSRequest):
     """
     if not request.text:
         raise HTTPException(status_code=400, detail="Văn bản không được để trống.")
-    print(request.text)
     # --- ƯU TIÊN 1: THỬ GỌI API BÊN NGOÀI ---
     if EXTERNAL_TTS_URL:
         print(f"--> [Ưu tiên 1] Thử gọi API ngoài: {EXTERNAL_TTS_URL}")
+        print(request)
         try:
-            external_payload = {"text": request.text, "speaker_id": 1}
+            external_payload = {"text": request.text, "speaker_id": request.speaker_id}
             # Đặt timeout hợp lý để không phải chờ quá lâu
             response = requests.post(f"{EXTERNAL_TTS_URL}/tts", json=external_payload, timeout=60)
 

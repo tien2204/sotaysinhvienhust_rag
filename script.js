@@ -18,66 +18,6 @@ const faqQuestions = [
 let audioPlayer = new Audio();
 let currentlyPlayingIcon = null;
 
-// Hàm gọi API để chuyển văn bản thành giọng nói và phát
-async function playText(text, iconElement) {
-    // Nếu đang có audio khác phát, dừng lại
-    if (!audioPlayer.paused) {
-        audioPlayer.pause();
-        if (currentlyPlayingIcon) {
-            currentlyPlayingIcon.className = 'fas fa-volume-up';
-        }
-        // Nếu click vào chính nút đang phát -> chỉ dừng lại
-        if (currentlyPlayingIcon === iconElement) {
-            currentlyPlayingIcon = null;
-            return;
-        }
-    }
-
-    currentlyPlayingIcon = iconElement;
-    iconElement.className = 'fas fa-spinner fa-pulse'; // Hiển thị trạng thái đang tải
-
-    try {
-        const response = await fetch(`${API_BASE_URL}/tts`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: text })
-        });
-
-        if (!response.ok) {
-            throw new Error('Lỗi khi tạo file âm thanh.');
-        }
-
-        const audioBlob = await response.blob();
-        const audioUrl = URL.createObjectURL(audioBlob);
-
-        audioPlayer.src = audioUrl;
-        audioPlayer.play();
-
-        // Cập nhật icon khi bắt đầu phát
-        audioPlayer.onplaying = () => {
-            iconElement.className = 'fas fa-stop-circle'; // Icon dừng
-        };
-
-        // Reset icon khi phát xong
-        audioPlayer.onended = () => {
-            iconElement.className = 'fas fa-volume-up';
-            currentlyPlayingIcon = null;
-        };
-
-        // Reset icon nếu có lỗi
-        audioPlayer.onerror = () => {
-            iconElement.className = 'fas fa-volume-up';
-            currentlyPlayingIcon = null;
-            console.error("Lỗi khi phát file âm thanh.");
-        }
-
-    } catch (error) {
-        console.error("Lỗi TTS:", error);
-        iconElement.className = 'fas fa-volume-up'; // Reset icon khi có lỗi
-        currentlyPlayingIcon = null;
-    }
-}
-
 // --- TOÀN BỘ LOGIC TƯƠNG TÁC VỚI TRANG WEB SẼ NẰM TRONG ĐÂY ---
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -116,7 +56,75 @@ document.addEventListener('DOMContentLoaded', () => {
     const activityModalTitle = document.getElementById('activity-modal-title');
     const activityModalHeader = activityModal.querySelector('.modal-header');
 
+    const voiceSelector = document.getElementById('voice-selector');
+
+
     // --- Functions ---
+
+    // Hàm gọi API để chuyển văn bản thành giọng nói và phát
+    async function playText(text, iconElement) {
+        // Nếu đang có audio khác phát, dừng lại
+        if (!audioPlayer.paused) {
+            audioPlayer.pause();
+            if (currentlyPlayingIcon) {
+                currentlyPlayingIcon.className = 'fas fa-volume-up';
+            }
+            // Nếu click vào chính nút đang phát -> chỉ dừng lại
+            if (currentlyPlayingIcon === iconElement) {
+                currentlyPlayingIcon = null;
+                return;
+            }
+        }
+
+        currentlyPlayingIcon = iconElement;
+        iconElement.className = 'fas fa-spinner fa-pulse'; // Hiển thị trạng thái đang tải
+
+        try {
+            // Lấy ID giọng đọc từ dropdown
+            const speakerId = voiceSelector ? parseInt(voiceSelector.value, 10) : 1; // Mặc định là giọng 1 nếu không tìm thấy
+
+            const response = await fetch(`${API_BASE_URL}/tts`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                // Thêm 'speaker_id' vào payload
+                body: JSON.stringify({ text: text, speaker_id: speakerId })
+            });
+
+            if (!response.ok) {
+                throw new Error('Lỗi khi tạo file âm thanh.');
+            }
+
+            const audioBlob = await response.blob();
+            const audioUrl = URL.createObjectURL(audioBlob);
+
+            audioPlayer.src = audioUrl;
+            audioPlayer.play();
+
+            // Cập nhật icon khi bắt đầu phát
+            audioPlayer.onplaying = () => {
+                iconElement.className = 'fas fa-stop-circle'; // Icon dừng
+            };
+
+            // Reset icon khi phát xong
+            audioPlayer.onended = () => {
+                iconElement.className = 'fas fa-volume-up';
+                currentlyPlayingIcon = null;
+            };
+
+            // Reset icon nếu có lỗi
+            audioPlayer.onerror = () => {
+                iconElement.className = 'fas fa-volume-up';
+                currentlyPlayingIcon = null;
+                console.error("Lỗi khi phát file âm thanh.");
+            }
+
+        } catch (error) {
+            console.error("Lỗi TTS:", error);
+            iconElement.className = 'fas fa-volume-up'; // Reset icon khi có lỗi
+            currentlyPlayingIcon = null;
+        }
+    }
+    
     // Các hàm này được định nghĩa bên trong để có thể truy cập các biến DOM ở trên một cách an toàn
     // Hàm helper để định dạng ngày giờ
     function formatDateTime(dateTimeString) {
