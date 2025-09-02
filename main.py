@@ -2,10 +2,12 @@ from mcp.scholarship import *
 from mcp.rag import *
 from mcp.jobs import *
 from mcp.activities import *
-from fastapi import FastAPI, HTTPException, Query
+import gtts
+from fastapi import FastAPI, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from enum import Enum
+import io
 
 app = FastAPI()
 
@@ -25,7 +27,54 @@ class JobType(str, Enum):
     hot = "hot"
     new = "new"
     internship = "internship"
+    
+class TTSRequest(BaseModel):
+    text: str
 
+EXTERNAL_TTS_URL = "https://133459782503.ngrok-free.app"
+@app.post("/tts", summary="Tổng hợp văn bản thành giọng nói với logic ưu tiên")
+async def text_to_speech(request: TTSRequest):
+    """
+    Ưu tiên 1: Gọi API TTS ngoài qua Ngrok.
+    Ưu tiên 2: Nếu thất bại, dùng gTTS làm phương án dự phòng.
+    """
+    if not request.text:
+        raise HTTPException(status_code=400, detail="Văn bản không được để trống.")
+    print(request.text)
+    # --- ƯU TIÊN 1: THỬ GỌI API BÊN NGOÀI ---
+    if EXTERNAL_TTS_URL:
+        print(f"--> [Ưu tiên 1] Thử gọi API ngoài: {EXTERNAL_TTS_URL}")
+        try:
+            external_payload = {"text": request.text, "speaker_id": 1}
+            # Đặt timeout hợp lý để không phải chờ quá lâu
+            response = requests.post(f"{EXTERNAL_TTS_URL}/tts", json=external_payload, timeout=60)
+
+            # Nếu request thành công (status code 2xx)
+            if response.ok:
+                print("--> [Ưu tiên 1] Thành công! Trả về audio từ API ngoài.")
+                return Response(content=response.content, media_type='audio/wav')
+            else:
+                # Nếu service trả về lỗi (4xx, 5xx), ghi nhận và chuyển sang gTTS
+                print(f"--> [Ưu tiên 1] Thất bại. Status: {response.status_code}. Chuyển sang gTTS.")
+
+        except requests.exceptions.RequestException as e:
+            print(f"--> [Ưu tiên 1] Thất bại. Lỗi mạng hoặc timeout: {e}. Chuyển sang gTTS.")
+
+    # --- ƯU TIÊN 2 (DỰ PHÒNG): SỬ DỤNG GTTS ---
+    print("--> [Ưu tiên 2] Sử dụng gTTS làm phương án dự phòng.")
+    try:
+        mp3_fp = io.BytesIO()
+        tts = gtts.gTTS(text=request.text, lang='vi')
+        tts.write_to_fp(mp3_fp)
+        mp3_fp.seek(0)
+
+        # gTTS trả về audio/mpeg (MP3)
+        return Response(content=mp3_fp.read(), media_type="audio/mpeg")
+
+    except Exception as e:
+        print(f"--> [Ưu tiên 2] Lỗi khi tạo audio bằng gTTS: {e}")
+        raise HTTPException(status_code=500, detail=f"Lỗi server nội bộ: {str(e)}")
+    
 @app.post("/ask")
 def ask_question(request: QuestionRequest):
     """Endpoint để nhận câu hỏi và trả lời."""

@@ -21,7 +21,7 @@ pc = Pinecone(api_key=pinecone_api_key)
 index_name = "sotayhust"  
 index = pc.Index(index_name)
 
-def get_similar_doc(text, namespace, topk = 10):
+def get_similar_doc(text, namespace, topk = 5):
     results = index.search(
         namespace="semantic_chunker", 
         query={

@@ -11,3 +11,5 @@ langgraph
 fastapi[all]
 uvicorn
 BeautifulSoup4
+ipywidgets
+audioop-lts

@@ -14,6 +14,70 @@ const faqQuestions = [
     "Làm sao để đăng ký Ký túc xá?"
 ];
 
+// Biến toàn cục để quản lý việc phát âm thanh
+let audioPlayer = new Audio();
+let currentlyPlayingIcon = null;
+
+// Hàm gọi API để chuyển văn bản thành giọng nói và phát
+async function playText(text, iconElement) {
+    // Nếu đang có audio khác phát, dừng lại
+    if (!audioPlayer.paused) {
+        audioPlayer.pause();
+        if (currentlyPlayingIcon) {
+            currentlyPlayingIcon.className = 'fas fa-volume-up';
+        }
+        // Nếu click vào chính nút đang phát -> chỉ dừng lại
+        if (currentlyPlayingIcon === iconElement) {
+            currentlyPlayingIcon = null;
+            return;
+        }
+    }
+
+    currentlyPlayingIcon = iconElement;
+    iconElement.className = 'fas fa-spinner fa-pulse'; // Hiển thị trạng thái đang tải
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/tts`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: text })
+        });
+
+        if (!response.ok) {
+            throw new Error('Lỗi khi tạo file âm thanh.');
+        }
+
+        const audioBlob = await response.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
+
+        audioPlayer.src = audioUrl;
+        audioPlayer.play();
+
+        // Cập nhật icon khi bắt đầu phát
+        audioPlayer.onplaying = () => {
+            iconElement.className = 'fas fa-stop-circle'; // Icon dừng
+        };
+
+        // Reset icon khi phát xong
+        audioPlayer.onended = () => {
+            iconElement.className = 'fas fa-volume-up';
+            currentlyPlayingIcon = null;
+        };
+
+        // Reset icon nếu có lỗi
+        audioPlayer.onerror = () => {
+            iconElement.className = 'fas fa-volume-up';
+            currentlyPlayingIcon = null;
+            console.error("Lỗi khi phát file âm thanh.");
+        }
+
+    } catch (error) {
+        console.error("Lỗi TTS:", error);
+        iconElement.className = 'fas fa-volume-up'; // Reset icon khi có lỗi
+        currentlyPlayingIcon = null;
+    }
+}
+
 // --- TOÀN BỘ LOGIC TƯƠNG TÁC VỚI TRANG WEB SẼ NẰM TRONG ĐÂY ---
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -219,14 +283,34 @@ document.addEventListener('DOMContentLoaded', () => {
         const messageContainer = document.createElement('div');
         messageContainer.classList.add('message', messageType);
 
+        const messageContent = document.createElement('div');
+        messageContent.classList.add('message-content');
+
         if (isHTML) {
-            messageContainer.innerHTML = text;
+            messageContent.innerHTML = text;
         } else {
             const p = document.createElement('p');
             p.textContent = text;
-            messageContainer.appendChild(p);
+            messageContent.appendChild(p);
         }
-        
+
+        messageContainer.appendChild(messageContent);
+
+        // Thêm nút đọc văn bản cho tin nhắn của bot
+        if (messageType === 'bot-message' && text.trim() !== '') {
+            const speakerButton = document.createElement('button');
+            speakerButton.classList.add('speak-button');
+            speakerButton.title = 'Đọc văn bản';
+            speakerButton.innerHTML = '<i class="fas fa-volume-up"></i>';
+
+            // Lấy nội dung text thuần túy để đọc, tránh đọc các thẻ HTML
+            const textToSpeak = messageContent.textContent || messageContent.innerText;
+
+            speakerButton.onclick = () => playText(textToSpeak, speakerButton.querySelector('i'));
+
+            messageContainer.appendChild(speakerButton);
+        }
+
         messagesDiv.appendChild(messageContainer);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
         return messageContainer;

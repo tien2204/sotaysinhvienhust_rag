@@ -156,7 +156,6 @@ header h1 {
     background-color: var(--faq-hover-bg);
 }
 
-
 /* ==========================================================================
    Phần Footer và ô nhập liệu
    ========================================================================== */
@@ -231,8 +230,8 @@ header h1 {
 }
 
 /* ==========================================================================
-   Nút mở Học bổng
-   ========================================================================== */
+   Nút mở Học bổng
+   ========================================================================== */
 header {
     position: relative; /* Cần thiết để định vị nút học bổng */
     justify-content: center; /* Căn giữa tiêu đề */
@@ -257,10 +256,9 @@ header h1 {
     transform: scale(1.1);
 }
 
-
 /* ==========================================================================
-   Modal Học bổng
-   ========================================================================== */
+   Modal Học bổng
+   ========================================================================== */
 .modal {
     position: fixed;
     top: 0;
@@ -391,7 +389,6 @@ header h1 {
     margin-bottom: 8px;
 }
 
-
 /* Spinner và thông báo lỗi */
 .loading-spinner {
     text-align: center;
@@ -410,8 +407,8 @@ header h1 {
 }
 
 /* ==========================================================================
-    Nút mở Việc làm
-   ========================================================================== */
+    Nút mở Việc làm
+   ========================================================================== */
 #jobs-button {
     background: none;
     border: none;
@@ -428,8 +425,8 @@ header h1 {
 }
 
 /* ==========================================================================
-    Modal Việc làm - Filter Bar
-   ========================================================================== */
+    Modal Việc làm - Filter Bar
+   ========================================================================== */
 .filter-bar {
     display: grid;
     /* Định nghĩa một lưới gồm 3 cột chính */
@@ -480,7 +477,6 @@ header h1 {
     box-shadow: 0 0 0 2px rgba(13, 71, 161, 0.2);
 }
 
-
 /* Kiểu dáng cho nhóm radio button (Loại tin) */
 .radio-group {
     display: flex;
@@ -503,7 +499,6 @@ header h1 {
     cursor: pointer;
     accent-color: var(--primary-color);
 }
-
 
 /* Wrapper để căn giữa nút */
 .filter-group-button {
@@ -548,10 +543,9 @@ header h1 {
 
 
 
-
 /* ==========================================================================
-    Danh sách & Chi tiết Việc làm
-   ========================================================================== */
+    Danh sách & Chi tiết Việc làm
+   ========================================================================== */
 
 .info-card h4 {
     font-size: 1.1rem; /* Tăng kích thước chữ */
@@ -597,7 +591,6 @@ header h1 {
     margin-bottom: 14px; /* Tăng khoảng cách giữa các dòng */
     line-height: 1.5;
 }
-
 
 .job-detail-grid {
     display: grid;
@@ -788,8 +781,8 @@ header h1 {
 }
 
 /* ==========================================================================
-    Danh sách Việc làm - Thiết kế dạng Card
-   ========================================================================== */
+    Danh sách Việc làm - Thiết kế dạng Card
+   ========================================================================== */
 #job-list-container {
     display: flex;
     flex-direction: column;
@@ -877,8 +870,8 @@ header h1 {
 }
 
 /* ==========================================================================
-    Nút mở Hoạt động
-   ========================================================================== */
+    Nút mở Hoạt động
+   ========================================================================== */
 #activity-button {
     background: none;
     border: none;
@@ -894,8 +887,8 @@ header h1 {
 }
 
 /* ==========================================================================
-    Giao diện danh sách Hoạt động
-   ========================================================================== */
+    Giao diện danh sách Hoạt động
+   ========================================================================== */
 #activity-list-container {
     display: flex;
     flex-direction: column;
@@ -948,8 +941,8 @@ header h1 {
 }
 
 /* ==========================================================================
-    Giao diện chi tiết Hoạt động
-   ========================================================================== */
+    Giao diện chi tiết Hoạt động
+   ========================================================================== */
 .activity-detail-grid {
     display: grid;
     grid-template-columns: 1fr 2fr;
@@ -1071,7 +1064,6 @@ header h1 {
     background: #555;
 }
 
-
 /* Responsive */
 @media (max-width: 768px) {
     .activity-detail-grid {
@@ -1080,8 +1072,8 @@ header h1 {
 }
 
 /* ==========================================================================
-    Giao diện phần Tiêu chí (Hoạt động)
-   ========================================================================== */
+    Giao diện phần Tiêu chí (Hoạt động)
+   ========================================================================== */
 .activity-criteria-card {
     margin-top: 25px;
     border: 1px solid #ddd;
@@ -1129,10 +1121,51 @@ header h1 {
     font-weight: bold;
 }
 /* ==========================================================================
-    Sửa lỗi khoảng trắng thừa do thẻ HTML rỗng
-   ========================================================================== */
+    Sửa lỗi khoảng trắng thừa do thẻ HTML rỗng
+   ========================================================================== */
 
 /* Tìm tất cả các thẻ <p> rỗng bên trong các khu vực nội dung và ẩn chúng đi */
 .detail-content p:empty {
     display: none;
+}
+
+
+
+.message {
+    display: flex;
+    align-items: center; 
+    gap: 10px; 
+}
+.bot-message {
+    justify-content: flex-start;
+}
+
+.user-message {
+    justify-content: flex-end;
+}
+
+.message-content {
+    flex-grow: 1;
+}
+
+.speak-button {
+    background: none;
+    border: none;
+    color: #555;
+    cursor: pointer;
+    font-size: 1.1rem; 
+    padding: 5px;
+    border-radius: 50%;
+    width: 32px; 
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s, color 0.2s;
+    flex-shrink: 0;
+}
+
+.speak-button:hover {
+    background-color: #e9e9e9;
+    color: #000;
 }
