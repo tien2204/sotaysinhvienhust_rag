@@ -6,6 +6,8 @@ from typing import List, Optional
 import calendar
 from typing import Dict, List
 from langchain_core.tools import tool
+from langchain_community.tools.tavily_search import TavilySearchResults
+from langchain_community.document_loaders import WebBaseLoader
 from pinecone import Pinecone
 from dotenv import load_dotenv
 load_dotenv()
@@ -20,6 +22,9 @@ pinecone_api_key = os.getenv("PICONE_API_KEY")
 pc = Pinecone(api_key=pinecone_api_key)
 index_name = "sotayhust"  
 index = pc.Index(index_name)
+
+#Thiết lập tool search web tavily
+tavily_tool = TavilySearchResults(max_results=5)
 
 def get_similar_doc(text, namespace, topk = 5):
     results = index.search(
@@ -87,6 +92,46 @@ def search_academic_regulations(query: str) -> List[str]:
     """
     print(f"---TOOL: search_academic_regulations (namespace: QCDT2025) | Query: {query}---")
     return get_similar_doc(query, namespace="QCDT2025")
+
+@tool
+def search_law_vietnam(query: str) -> List[str]:
+    """
+    Sử dụng để tra cứu các VĂN BẢN LUẬT VIỆT NAM đã được nạp vào namespace 'LawVN'.
+    Dùng cho các câu hỏi liên quan đến: Bộ luật, Hiến pháp, luật hình sự, luật dân sự,
+    luật tố tụng, luật giáo dục, và các văn bản pháp luật khác.
+    """
+    print(f"---TOOL: search_law_vietnam (namespace: LawVN) | Query: {query}---")
+    return get_similar_doc(query, namespace="LawVN")
+
+@tool
+def search_website(query: str) -> List[str]:
+    """
+    Sử dụng Tavily API để tìm kiếm website liên quan đến query,
+    sau đó scrape nội dung các website đó và trả về danh sách đoạn văn bản.
+    Hữu ích cho các câu hỏi cần thông tin mới, thời sự hoặc không có trong cơ sở dữ liệu.
+    """
+    print(f"---TOOL: search_website | Query: {query}---")
+    
+    # 1. Tìm kiếm URL liên quan bằng Tavily
+    try:
+        results = tavily_tool.invoke({"query": query})
+        urls = [item["url"] for item in results if "url" in item]
+    except Exception as e:
+        print(f"Lỗi khi gọi Tavily: {e}")
+        return [f"Lỗi khi tìm kiếm với Tavily: {e}"]
+
+    if not urls:
+        return ["Không tìm thấy website nào liên quan."]
+
+    # 2. Scrape nội dung từ các URL
+    try:
+        loader = WebBaseLoader(urls)
+        docs = loader.load()
+        list_doc = [doc.page_content for doc in docs if doc.page_content.strip()]
+        return list_doc
+    except Exception as e:
+        print(f"Lỗi khi scrape website: {e}")
+        return [f"Lỗi khi scrape website: {e}"]
 
 @tool
 def get_scholarships(

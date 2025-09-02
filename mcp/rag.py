@@ -12,7 +12,14 @@ import os
 
 load_dotenv()
 
-from .tools import get_scholarships, search_student_handbook, search_academic_regulations, query_classifier 
+from .tools import (
+    get_scholarships,
+    search_student_handbook,
+    search_academic_regulations,
+    query_classifier,
+    search_law_vietnam,
+    search_website
+) 
 
 # --- Khởi tạo ---
 
@@ -23,7 +30,14 @@ os.environ["LANGCHAIN_PROJECT"] = "HUST-AI-Assistant"
 os.environ["LANGCHAIN_TRACING_V2"] = "true" 
 
 llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.2)
-tool = [get_scholarships, search_academic_regulations, search_student_handbook, query_classifier]
+tool = [
+    get_scholarships,
+    search_academic_regulations,
+    search_student_handbook,
+    search_law_vietnam,
+    search_website,
+    query_classifier
+]
 
 # Gắn (bind) các tool vào LLM để nó biết cách gọi
 llm_with_tools = llm.bind_tools(tool)
@@ -123,11 +137,15 @@ QUY TRÌNH SUY NGHĨ BẮT BUỘC:
         2.2 Đối với câu hỏi về HỌC VỤ: Dùng search_academic_regulations (ví dụ: điểm số, tín chỉ, tốt nghiệp).
         2.3 Đối với câu hỏi về ĐỜI SỐNG SINH VIÊN: Dùng search_student_handbook (ví dụ: KTX, xe bus, CLB).
         2.4 Đối với câu hỏi/giới thiệu về các Trường, khoa, viện: Sử dụng search_student_handbook để lấy thông tin.
+        2.5 Đối với câu hỏi liên quan đến PHÁP LUẬT VIỆT NAM: Dùng search_law_vietnam. (ví dụ: Hiến pháp, Bộ luật, dân sự, hình sự, lao động)
+        2.6 Đối với câu hỏi cần thông tin thời sự hoặc ngoài cơ sở dữ liệu, ngoài các mô tả các tool trên: Dùng search_website.
     3. Tổng hợp kết quả: Kết hợp thông tin từ các công cụ và trả lời người dùng một cách mạch lạc theo định dạng đã yêu cầu ở trên.
 MÔ TẢ CÁC CÔNG CỤ:
     1. get_scholarships: Dùng để lấy danh sách học bổng. Tham số time_period rất linh hoạt, có thể là từ khóa ("this_month") hoặc tháng cụ thể ("2025-08").
     2. search_academic_regulations: Tra cứu trong Quy chế Đào tạo (văn bản học thuật chính thức).
     3. search_student_handbook: Tra cứu trong Sổ tay Sinh viên (hướng dẫn đời sống, dịch vụ).
+    4. search_law_vietnam: Tra cứu văn bản pháp luật Việt Nam.
+    5. search_website: Tìm kiếm và scrape nội dung web.
 """
 
 def get_response(question: str) -> str:
