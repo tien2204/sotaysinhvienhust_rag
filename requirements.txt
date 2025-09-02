@@ -13,3 +13,4 @@ uvicorn
 BeautifulSoup4
 ipywidgets
 audioop-lts
+vietnam-number

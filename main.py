@@ -2,12 +2,14 @@ from mcp.scholarship import *
 from mcp.rag import *
 from mcp.jobs import *
 from mcp.activities import *
+from tts import preprocess_text
 import gtts
 from fastapi import FastAPI, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from enum import Enum
 import io
+
 
 app = FastAPI()
 
@@ -32,7 +34,7 @@ class TTSRequest(BaseModel):
     text: str
     speaker_id : int = 1
 
-EXTERNAL_TTS_URL = "https://70115612abd8.ngrok-free.app"
+EXTERNAL_TTS_URL = "https://1cecedcf420e.ngrok-free.app"
 @app.post("/tts", summary="Tổng hợp văn bản thành giọng nói với logic ưu tiên")
 async def text_to_speech(request: TTSRequest):
     """
@@ -46,7 +48,7 @@ async def text_to_speech(request: TTSRequest):
         print(f"--> [Ưu tiên 1] Thử gọi API ngoài: {EXTERNAL_TTS_URL}")
         print(request)
         try:
-            external_payload = {"text": request.text, "speaker_id": request.speaker_id}
+            external_payload = {"text": preprocess_text(request.text), "speaker_id": request.speaker_id}
             # Đặt timeout hợp lý để không phải chờ quá lâu
             response = requests.post(f"{EXTERNAL_TTS_URL}/tts", json=external_payload, timeout=60)
 
