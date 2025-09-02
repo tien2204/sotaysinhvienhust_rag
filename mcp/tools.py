@@ -88,8 +88,7 @@ def search_academic_regulations(query: str) -> List[str]:
     print(f"---TOOL: search_academic_regulations (namespace: QCDT2025) | Query: {query}---")
     return get_similar_doc(query, namespace="QCDT2025")
 
-# --- Định nghĩa Tool 2: Lấy Học bổng theo Ngày ---
-# @tool
+@tool
 def get_scholarships(
     time_period: str = "upcoming", status: str = "all"
 ) -> List[Dict]:
@@ -112,7 +111,6 @@ def get_scholarships(
     today = datetime.now()
     start_dt, end_dt = None, None
 
-    # --- Logic thông minh để xác định khoảng thời gian ---
     time_period_mapping = {
         "upcoming": (today, today + timedelta(days=30)),
         "this_week": (today - timedelta(days=today.weekday()), (today - timedelta(days=today.weekday())) + timedelta(days=6)),
@@ -124,7 +122,6 @@ def get_scholarships(
     if time_period in time_period_mapping:
         start_dt, end_dt = time_period_mapping[time_period]
     else:
-        # **LOGIC MỚI: Cố gắng diễn giải time_period như một ngày/tháng cụ thể**
         try:
             # Thử định dạng YYYY-MM (cho cả tháng)
             parsed_date = datetime.strptime(time_period, "%Y-%m")
@@ -143,11 +140,9 @@ def get_scholarships(
     start_dt = start_dt.replace(hour=0, minute=0, second=0)
     end_dt = end_dt.replace(hour=23, minute=59, second=59)
 
-    # --- Lọc học bổng (ĐÃ SỬA LỖI) ---
     filtered_list = []
     for hb in all_scholarships:
         try:
-            # SỬA LỖI 1: Luôn đảm bảo truy cập key 'Deadline' tồn tại trong dict
             if 'Deadline' not in hb or not hb['Deadline']:
                 continue
             
@@ -159,11 +154,9 @@ def get_scholarships(
             current_status = "Expired" if is_expired else "Open"
 
             if status == "all" or (status == "open" and not is_expired) or (status == "expired" and is_expired):
-                # SỬA LỖI 2: Xây dựng dictionary kết quả bằng cách truy cập key an toàn với .get()
                 hb = Scholarship(hb)
                 filtered_list.append(hb.get_full_info_string())
         except (ValueError, KeyError, TypeError) as e:
-            # Bắt lỗi rộng hơn để tránh làm sập tool nếu dữ liệu không nhất quán
             print(f"Bỏ qua học bổng bị lỗi: {hb.get('Title')}, Lỗi: {e}")
             continue
 
