@@ -2,7 +2,7 @@ from mcp.scholarship import *
 from mcp.rag import *
 from mcp.jobs import *
 from mcp.activities import *
-from tts import preprocess_text
+from utils import preprocess_text
 import gtts
 from fastapi import FastAPI, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware

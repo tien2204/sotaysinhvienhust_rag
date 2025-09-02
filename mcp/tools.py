@@ -23,7 +23,7 @@ index = pc.Index(index_name)
 
 def get_similar_doc(text, namespace, topk = 5):
     results = index.search(
-        namespace="semantic_chunker", 
+        namespace=namespace, 
         query={
             "inputs": {"text": text}, 
             "top_k": topk

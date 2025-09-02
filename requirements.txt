@@ -14,3 +14,7 @@ BeautifulSoup4
 ipywidgets
 audioop-lts
 vietnam-number
+requests
+pinecone
+gtts
+langchain-core
