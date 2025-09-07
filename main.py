@@ -9,9 +9,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from enum import Enum
 import io
+import uuid # Thêm thư viện uuid để tạo session id
+from typing import List, Dict, Optional 
+from langchain_core.messages import BaseMessage
 
 
 app = FastAPI()
+
+# --- BỘ NHỚ LƯU TRỮ CÁC PHIÊN HỘI THOẠI (SESSION STORE) ---
+# Đây là một giải pháp đơn giản dùng dictionary.
+# Dữ liệu sẽ bị mất khi khởi động lại server.
+# Key: session_id (str), Value: list of BaseMessage
+conversation_histories: Dict[str, List[BaseMessage]] = {}
 
 # Cho phép CORS để frontend có thể truy cập API
 app.add_middleware(
@@ -24,6 +33,13 @@ app.add_middleware(
 
 class QuestionRequest(BaseModel):
     question: str
+    # Client sẽ gửi kèm session_id để duy trì cuộc hội thoại
+    session_id: Optional[str] = None
+
+class AnswerResponse(BaseModel):
+    answer: str
+    # Server sẽ trả về session_id để client dùng cho lần gọi tiếp theo
+    session_id: str
 
 class JobType(str, Enum):
     hot = "hot"
@@ -34,7 +50,7 @@ class TTSRequest(BaseModel):
     text: str
     speaker_id : int = 1
 
-EXTERNAL_TTS_URL = "https://1cecedcf420e.ngrok-free.app"
+EXTERNAL_TTS_URL = "https://9721771d4d78.ngrok-free.app"
 @app.post("/tts", summary="Tổng hợp văn bản thành giọng nói với logic ưu tiên")
 async def text_to_speech(request: TTSRequest):
     """
@@ -78,16 +94,41 @@ async def text_to_speech(request: TTSRequest):
         print(f"--> [Ưu tiên 2] Lỗi khi tạo audio bằng gTTS: {e}")
         raise HTTPException(status_code=500, detail=f"Lỗi server nội bộ: {str(e)}")
     
-@app.post("/ask")
+@app.post("/ask", response_model=AnswerResponse)
 def ask_question(request: QuestionRequest):
-    """Endpoint để nhận câu hỏi và trả lời."""
+    """
+    Endpoint để nhận câu hỏi và trả lời, có duy trì ngữ cảnh hội thoại.
+    """
     try:
         if not request.question:
             raise HTTPException(status_code=400, detail="Vui lòng nhập câu hỏi.")
         
-        return {"answer": get_response(request.question)}
+        # --- LOGIC QUẢN LÝ PHIÊN ---
+        session_id = request.session_id
+        
+        # 1. Nếu client không gửi session_id hoặc id không tồn tại, tạo phiên mới.
+        if not session_id or session_id not in conversation_histories:
+            session_id = str(uuid.uuid4())
+            conversation_histories[session_id] = []
+            print(f"--- Bắt đầu phiên hội thoại mới: {session_id} ---")
+
+        # 2. Lấy lịch sử hội thoại của phiên hiện tại.
+        current_history = conversation_histories[session_id]
+        
+        # 3. Gọi hàm get_response đã được sửa đổi với câu hỏi và lịch sử.
+        final_answer, updated_history = get_response(request.question, current_history)
+        
+        # 4. Cập nhật lại lịch sử cho phiên này trong bộ nhớ.
+        conversation_histories[session_id] = updated_history
+        
+        # 5. Trả về câu trả lời và session_id cho client.
+        return {"answer": final_answer, "session_id": session_id}
+
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/scholarships", response_model=List[dict])
 async def get_scholarships():
