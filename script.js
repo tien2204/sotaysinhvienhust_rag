@@ -18,6 +18,9 @@ const faqQuestions = [
 let audioPlayer = new Audio();
 let currentlyPlayingIcon = null;
 
+// --- BIẾN ĐỂ LƯU SESSION ID CHO CUỘC HỘI THOẠI ---
+let currentSessionId = null;
+
 // --- TOÀN BỘ LOGIC TƯƠNG TÁC VỚI TRANG WEB SẼ NẰM TRONG ĐÂY ---
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -56,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const activityModalTitle = document.getElementById('activity-modal-title');
     const activityModalHeader = activityModal.querySelector('.modal-header');
 
-    const voiceSelector = document.getElementById('voice-selector');
+    const voiceSelector = document.getElementById('voice-selector');
 
 
     // --- Functions ---
@@ -80,15 +83,15 @@ document.addEventListener('DOMContentLoaded', () => {
         iconElement.className = 'fas fa-spinner fa-pulse'; // Hiển thị trạng thái đang tải
 
         try {
-            // Lấy ID giọng đọc từ dropdown
-            const speakerId = voiceSelector ? parseInt(voiceSelector.value, 10) : 1; // Mặc định là giọng 1 nếu không tìm thấy
+            // Lấy ID giọng đọc từ dropdown
+            const speakerId = voiceSelector ? parseInt(voiceSelector.value, 10) : 1; // Mặc định là giọng 1 nếu không tìm thấy
 
-            const response = await fetch(`${API_BASE_URL}/tts`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                // Thêm 'speaker_id' vào payload
-                body: JSON.stringify({ text: text, speaker_id: speakerId })
-            });
+            const response = await fetch(`${API_BASE_URL}/tts`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                // Thêm 'speaker_id' vào payload
+                body: JSON.stringify({ text: text, speaker_id: speakerId })
+            });
 
             if (!response.ok) {
                 throw new Error('Lỗi khi tạo file âm thanh.');
@@ -260,6 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (backButton) backButton.remove();
     }
 
+    // --- HÀM sendMessage ĐÃ ĐƯỢC SỬA LẠI ---
     async function sendMessage() {
         const question = userInput.value.trim();
         if (question === '') return;
@@ -268,18 +272,34 @@ document.addEventListener('DOMContentLoaded', () => {
         userInput.value = '';
         const thinkingMessage = addThinkingAnimation();
 
+        // 1. Chuẩn bị payload
+        const payload = {
+            question: question
+        };
+        // 2. Gửi session_id nếu có
+        if (currentSessionId) {
+            payload.session_id = currentSessionId;
+        }
+
         try {
             const response = await fetch(`${API_BASE_URL}/ask`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ question: question })
+                body: JSON.stringify(payload) // Gửi payload đã có session_id
             });
 
             if (!response.ok) throw new Error('Lỗi khi kết nối đến backend');
 
             const data = await response.json();
+            
+            // 3. LƯU LẠI SESSION ID MỚI TỪ SERVER
+            currentSessionId = data.session_id;
+
             thinkingMessage.remove();
             addMessage(marked.parse(data.answer), 'bot-message', true);
+            
+            console.log("Cập nhật session ID:", currentSessionId); // Dòng log để kiểm tra
+
         } catch (error) {
             console.error('Lỗi:', error);
             if (thinkingMessage) thinkingMessage.remove();
