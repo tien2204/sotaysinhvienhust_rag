@@ -128,6 +128,66 @@ def ask_question(request: QuestionRequest):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+    
+# -------------------------------
+# OpenAI-style Chat Completions API
+# -------------------------------
+from pydantic import Field
+
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
+class ChatCompletionRequest(BaseModel):
+    model: str = Field(default="sotay-llm")
+    messages: List[ChatMessage]
+    session_id: Optional[str] = None
+
+@app.post("/v1/chat/completions")
+async def chat_completions(request: ChatCompletionRequest):
+    """
+    Endpoint tương thích OpenAI API (/v1/chat/completions).
+    Cho phép các công cụ (như LangChain, OpenAI SDK) gọi trực tiếp.
+    """
+    try:
+        # Lấy hoặc tạo session 
+        session_id = request.session_id or str(uuid.uuid4())
+        history = conversation_histories.get(session_id, [])
+
+        # Lấy message cuối cùng của user
+        user_message = None
+        for msg in reversed(request.messages):
+            if msg.role == "user":
+                user_message = msg.content
+                break
+        if not user_message:
+            raise HTTPException(status_code=400, detail="Không có user message trong request")
+
+        # Gọi LLM (RAG) 
+        final_answer, updated_history = get_response(user_message, history)
+        conversation_histories[session_id] = updated_history
+
+        # Trả về kết quả theo format OpenAI 
+        return {
+            "id": f"chatcmpl-{uuid.uuid4()}",
+            "object": "chat.completion",
+            "created": int(uuid.uuid1().time),
+            "model": request.model,
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {"role": "assistant", "content": final_answer},
+                    "finish_reason": "stop"
+                }
+            ],
+            "session_id": session_id
+        }
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 
 @app.get("/scholarships", response_model=List[dict])
