@@ -47,7 +47,7 @@ def search_student_handbook(query: str) -> List[str]:
     ký túc xá, nhà trọ, các tuyến xe bus, hỗ trợ tâm lý, hướng nghiệp, việc làm thêm,
     quy tắc ứng xử văn hóa, quy định về học bổng và thông tin liên hệ các phòng ban, khoa, viện.
     """
-    print(f"---SỬ DỤNG TOOL: search_docs với query: {query}---")
+    print(f"---SỬ DỤNG TOOL: search_student_handbook với query: {query}---")
     return get_similar_doc(query, namespace = "semantic_chunker")
 
 @tool
