@@ -13,9 +13,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-from langchain_google_genai import ChatGoogleGenerativeAI
-classifier_llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
-
 # --- Khởi tạo Pinecone (chỉ cho tool tìm kiếm sổ tay) ---
 
 pinecone_api_key = os.getenv("PICONE_API_KEY")
@@ -40,36 +37,7 @@ def get_similar_doc(text, namespace, topk = 5):
         list_doc.append(doc['fields']['text'])
     return list_doc
 
-# --- TOOL KIỂM DUYỆT NỘI DUNG ---
-@tool
-def query_classifier(query: str) -> str:
-    """
-    Phân loại câu hỏi của người dùng vào một trong các danh mục sau: 'safe', 'sensitive_political'.
-    """
 
-    system_prompt = f"""
-    Bạn là một chuyên gia kiểm duyệt nội dung cho một chatbot của trường đại học.
-    Nhiệm vụ của bạn là phân loại câu hỏi của sinh viên vào MỘT trong hai danh mục sau đây:
-    1. safe: Các câu hỏi liên quan trực tiếp đến đời sống, học tập, quy chế, học bổng, chính sách tại Đại học Bách Khoa Hà Nội.
-    2. sensitive_political: Các câu hỏi chứa nội dung về chính trị, tôn giáo, các vấn đề xã hội nhạy cảm, bạo lực, thù ghét, hoặc không phù hợp với môi trường giáo dục.
-
-    Hãy chỉ trả về TÊN của danh mục (ví dụ: "safe" hoặc "sensitive_political"), không giải thích gì thêm.
-
-    Câu hỏi cần phân loại: "{query}"
-    """
-    
-    print(f"---TOOL: Classifying query: '{query}'---")
-    
-    # Gọi LLM để phân loại
-    response = classifier_llm.invoke(system_prompt)
-    
-    # Xử lý kết quả trả về từ LLM
-    classification = response.content.strip().lower()
-    
-    if "sensitive_political" in classification:
-        return "sensitive_political"
-    
-    return "safe"
 # --- Định nghĩa Tool 1: Tìm kiếm Sổ tay Sinh viên ---
 @tool
 def search_student_handbook(query: str) -> List[str]:
